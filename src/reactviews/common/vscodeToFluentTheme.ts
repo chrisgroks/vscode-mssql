@@ -3,12 +3,12 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ColorPaletteTokens, ColorTokens } from "@fluentui/react-components";
+import { ColorTokens } from "@fluentui/react-components";
 import { ColorThemeKind } from "./vscodeWebViewProvider";
 
 export function getCustomColor(themeKind: ColorThemeKind): ColorTokens {
 	const customTheme: ColorTokens = {
-		colorNeutralForeground1: "var(--vscode-editor-foreground)",
+		colorNeutralForeground1: "var(--vscode-settings-dropdownForeground)",
 		colorNeutralForeground1Hover: "var(--vscode-tab-activeForeground)",
 		colorNeutralForeground1Pressed: "var(--vscode-tab-activeForeground)",
 		colorNeutralForeground1Selected: "var(--vscode-tab-activeForeground)",
@@ -45,12 +45,12 @@ export function getCustomColor(themeKind: ColorThemeKind): ColorTokens {
 		colorBrandForeground2Hover: "",
 		colorBrandForeground2Pressed: "",
 		colorNeutralForeground1Static: "",
-		colorNeutralForegroundInverted: "",
+		colorNeutralForegroundInverted: "var(----vscode-checkbox-foreground)",
 		colorNeutralForegroundInvertedHover: "",
 		colorNeutralForegroundInvertedPressed: "",
 		colorNeutralForegroundInvertedSelected: "",
-		colorNeutralForegroundInverted2: "",
-		colorNeutralForegroundOnBrand: "",
+		colorNeutralForegroundInverted2: "var(----vscode-checkbox-foreground)",
+		colorNeutralForegroundOnBrand: "var(--vscode-button-foreground)",
 		colorNeutralForegroundStaticInverted: "",
 		colorNeutralForegroundInvertedLink: "",
 		colorNeutralForegroundInvertedLinkHover: "",
@@ -176,11 +176,4 @@ export function getCustomColor(themeKind: ColorThemeKind): ColorTokens {
 		colorBrandShadowKey: "",
 	};
 	return customTheme;
-}
-
-function statusColorPalette(kind: ColorThemeKind): ColorPaletteTokens {
-	const colors: ColorPaletteTokens = {
-
-	}
-	return colors;
 }
