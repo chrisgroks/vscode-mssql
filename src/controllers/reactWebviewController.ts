@@ -5,7 +5,10 @@
 
 import * as vscode from 'vscode';
 import { WebviewRoute } from '../sharedInterfaces/webviewRoutes';
+import { promises as fs } from 'fs';
 
+let mssqlWebviewScript = undefined;
+let mssqlWebviewStyle = undefined;
 /**
  * ReactWebViewPanelController is a class that manages a vscode.WebviewPanel and provides
  * a way to communicate with it. It provides a way to register request handlers and reducers
@@ -52,7 +55,11 @@ export class ReactWebViewPanelController<State, Reducers> implements vscode.Disp
 			}
 		);
 
-		this._panel.webview.html = this._getHtmlTemplate();
+		this.init(initialData);
+	}
+
+	private async init(t: State) {
+		this._panel.webview.html = await this._getHtmlTemplate();
 		this._panel.iconPath = this._iconPath;
 		this._disposables.push(this._panel.webview.onDidReceiveMessage((message) => {
 			if (message.type === 'request') {
@@ -70,13 +77,25 @@ export class ReactWebViewPanelController<State, Reducers> implements vscode.Disp
 		});
 		this.setupTheming();
 		this._registerDefaultRequestHandlers();
-		this.state = initialData;
+		this.state = t;
 	}
 
-	private _getHtmlTemplate() {
-		const nonce = getNonce();
-		const scriptUri = this.resourceUrl(['mssqlwebview.js']);
-		const styleUri = this.resourceUrl(['mssqlwebview.css']);
+	private async _getHtmlTemplate() {
+		//const nonce = getNonce();
+		//const scriptUri = this.resourceUrl(['mssqlwebview.js']);
+		//const styleUri = this.resourceUrl(['mssqlwebview.css']);
+		if (mssqlWebviewScript === undefined) {
+			mssqlWebviewScript = await fs.readFile(vscode.Uri.joinPath(this._context.extensionUri, 'out', 'src', 'reactviews', 'assets', 'mssqlwebview.js').fsPath, 'utf8');
+		} else {
+			console.log('mssqlwebview.js already loaded');
+		}
+
+		if (mssqlWebviewStyle === undefined) {
+			mssqlWebviewStyle = await fs.readFile(vscode.Uri.joinPath(this._context.extensionUri, 'out', 'src', 'reactviews', 'assets', 'mssqlwebview.css').fsPath, 'utf8');
+		} else {
+			console.log('mssqlwebview.css already loaded');
+		}
+
 		return `
 		<!DOCTYPE html>
 				<html lang="en">
@@ -84,7 +103,9 @@ export class ReactWebViewPanelController<State, Reducers> implements vscode.Disp
 				  <meta charset="UTF-8">
 				  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 				  <title>mssqlwebview</title>
-				  <link rel="stylesheet" href="${styleUri}">
+				  <style>
+					${mssqlWebviewStyle}
+				  </style>
 				  <style>
 					html, body {
 						margin: 0;
@@ -96,7 +117,9 @@ export class ReactWebViewPanelController<State, Reducers> implements vscode.Disp
 				</head>
 				<body>
 				  <div id="root"></div>
-				  <script nonce="${nonce}" src="${scriptUri}"></script>
+				  <script>
+				  	${mssqlWebviewScript}
+				  </script>
 				</body>
 				</html>
 		`;
@@ -130,7 +153,7 @@ export class ReactWebViewPanelController<State, Reducers> implements vscode.Disp
 		};
 	}
 
-	private resourceUrl(path: string[]) {
+	public resourceUrl(path: string[]) {
 		return this._panel.webview.asWebviewUri(vscode.Uri.joinPath(this._context.extensionUri, 'out', 'src', 'reactviews', 'assets', ...path));
 	}
 
