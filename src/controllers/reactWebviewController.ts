@@ -86,15 +86,14 @@ export class ReactWebViewPanelController<State, Reducers> implements vscode.Disp
 		//const scriptUri = this.resourceUrl(['mssqlwebview.js']);
 		//const styleUri = this.resourceUrl(['mssqlwebview.css']);
 		if (mssqlWebviewScript === undefined) {
+			console.log('Fetching mssqlWebviewScript from disk');
 			mssqlWebviewScript = await fs.readFile(vscode.Uri.joinPath(this._context.extensionUri, 'out', 'src', 'reactviews', 'assets', 'mssqlwebview.js').fsPath, 'utf8');
 		} else {
-			console.log('mssqlwebview.js already loaded');
+			console.log('Using cached mssqlWebviewScript');
 		}
 
 		if (mssqlWebviewStyle === undefined) {
 			mssqlWebviewStyle = await fs.readFile(vscode.Uri.joinPath(this._context.extensionUri, 'out', 'src', 'reactviews', 'assets', 'mssqlwebview.css').fsPath, 'utf8');
-		} else {
-			console.log('mssqlwebview.css already loaded');
 		}
 
 		return `
