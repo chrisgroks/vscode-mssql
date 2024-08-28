@@ -49,7 +49,7 @@ export class ReactWebViewPanelController<State, Reducers> extends ReactWebviewBa
 			}
 		);
 
-		this._panel.webview.html = this._getHtmlTemplate();
+		this._getHtmlTemplate(this._panel);
 		this._panel.iconPath = this._iconPath;
 		this.registerDisposable(this._panel.webview.onDidReceiveMessage(this._webviewMessageHandler));
 		this._panel.onDidDispose(() => {

@@ -6,6 +6,7 @@
 import * as vscode from 'vscode';
 import { WebviewRoute } from '../sharedInterfaces/webviewRoutes';
 import { getNonce } from '../utils/utils';
+import * as fs from 'fs/promises';
 
 /**
  * ReactWebviewBaseController is a class that manages a vscode.Webview and provides
@@ -58,14 +59,26 @@ export abstract class ReactWebviewBaseController<State, Reducers> implements vsc
 		this._disposables.push(disposable);
 	}
 
-	protected _getHtmlTemplate() {
+	protected async _getHtmlTemplate(panel: vscode.WebviewPanel) {
 		const nonce = getNonce();
 		const scriptUri = this.resourceUrl(['mssqlwebview.js']);
+
+		let htmlTemplate = await fs.readFile(vscode.Uri.joinPath(this._context.extensionUri, 'out', 'src', 'reactviews', 'webpack', 'connectionDialog.html').fsPath, 'utf8');
+
+		//read base tag from html and replace it with the correct path
+		const baseUrl = this._getWebview().asWebviewUri(vscode.Uri.joinPath(this._context.extensionUri, 'out', 'src', 'reactviews', 'webpack')).toString() + '/';
+		console.log('baseUrl', baseUrl);
+		htmlTemplate = htmlTemplate.replace('<base href="vscodeweburistring">', `<base href="${baseUrl}">`).replace('<base href="vscodeweburistring" />', `<base href="${baseUrl}" />`);
+		htmlTemplate = htmlTemplate.replace('<body>', '<body><div id="root"></div>');
+		console.log(htmlTemplate);
+		//return htmlTemplate;
+
 		const styleUri = this.resourceUrl(['mssqlwebview.css']);
-		return `
+		const template = `
 		<!DOCTYPE html>
 				<html lang="en">
 				<head>
+				  <base href="${baseUrl}">
 				  <meta charset="UTF-8">
 				  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 				  <title>mssqlwebview</title>
@@ -84,10 +97,28 @@ export abstract class ReactWebviewBaseController<State, Reducers> implements vsc
 				  <script>
 				 	const assetPathVscodeUri = "${this.resourceUrl(['']).toString()}";
 				  </script>
-				  <script nonce="${nonce}" src="${scriptUri}"></script>
+				  <script src="commons-connectionDialog~tableDeisgner~executionPlan-react-dom.production.min.js.js"></script>
+					<script src="commons-connectionDialog~tableDeisgner~executionPlan-floating-ui.core.mjs.js"></script>
+					<script src="commons-connectionDialog~tableDeisgner~executionPlan-tokens.js.js"></script>
+					<script src="commons-connectionDialog~tableDeisgner~executionPlan-useButtonStyles.styles.js.js"></script>
+					<script src="commons-connectionDialog~tableDeisgner~executionPlan-floating-ui.dom.mjs.js"></script>
+					<script src="commons-connectionDialog~tableDeisgner~executionPlan-convert-9768a965.js.js"></script>
+					<script src="commons-connectionDialog~tableDeisgner-chunk-7.js.js"></script>
+					<script src="commons-connectionDialog~tableDeisgner-chunk-15.js.js"></script>
+					<script src="commons-connectionDialog~tableDeisgner-chunk-6.js.js"></script>
+					<script src="commons-connectionDialog~tableDeisgner-chunk-4.js.js"></script>
+					<script src="commons-connectionDialog~tableDeisgner-chunk-13.js.js"></script>
+					<script src="commons-connectionDialog~tableDeisgner-tabster.esm.js.js"></script>
+					<script src="commons-connectionDialog~tableDeisgner-index.js.js"></script>
+					<script src="commons-connectionDialog-chunk-3.js.js"></script>
+					<script src="commons-connectionDialog-chunk-5.js.js"></script>
+					<script src="commons-connectionDialog-chunk-2.js.js"></script>
+					<script src="commons-connectionDialog-chunk-1.js.js"></script>
+					<script src="connectionDialog.js"></script>
 				</body>
 				</html>
 		`;
+		panel.webview.html = template;
 	}
 
 	protected abstract _getWebview(): vscode.Webview;
@@ -131,7 +162,7 @@ export abstract class ReactWebviewBaseController<State, Reducers> implements vsc
 		};
 		this._webViewRequestHandlers['getUri'] = async (path: string) => {
 			path = path.replace('./', '');
-			const result =  this.resourceUrl([path]).toString();
+			const result = this.resourceUrl([path]).toString();
 			return result;
 		};
 	}

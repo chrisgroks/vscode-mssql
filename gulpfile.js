@@ -220,7 +220,9 @@ async function generateReactWebviewsBundle() {
 		 * for each entry point, to be used by the webview's HTML content.
 		 */
 		entryPoints: {
-			mssqlwebview: 'src/reactviews/index.tsx'
+			mssqlwebview: 'src/reactviews/index.tsx',
+			connectionDialog: 'src/reactviews/pages/ConnectionDialog/index.tsx',
+			tableDeisgner: 'src/reactviews/pages/TableDesigner/index.tsx',
 		},
 		bundle: true,
 		outdir: 'out/src/reactviews/assets',
@@ -240,7 +242,7 @@ async function generateReactWebviewsBundle() {
 			typecheckPlugin()
 		],
 		sourcemap: prod ? false : 'inline',
-		metafile: !prod,
+		metafile: true,
 		minify: prod,
 		minifyWhitespace: prod,
 		minifyIdentifiers: prod,
@@ -248,15 +250,13 @@ async function generateReactWebviewsBundle() {
 
 	const result = await ctx.rebuild();
 
-	if (!prod) {
-		/**
-		 * Generating esbuild metafile for webviews. You can analyze the metafile https://esbuild.github.io/analyze/
-		 * to see the bundle size and other details.
-		 */
-		const fs = require('fs').promises;
-		if (result.metafile) {
-			await fs.writeFile('./webviews-metafile.json', JSON.stringify(result.metafile));
-		}
+	/**
+	 * Generating esbuild metafile for webviews. You can analyze the metafile https://esbuild.github.io/analyze/
+	 * to see the bundle size and other details.
+	 */
+	const fs = require('fs').promises;
+	if (result.metafile) {
+		await fs.writeFile('./webviews-metafile.json', JSON.stringify(result.metafile));
 	}
 
 	await ctx.dispose();
@@ -450,7 +450,12 @@ gulp.task('clean', function (done) {
 	return del('out', done);
 });
 
-gulp.task('build', gulp.series('clean', 'ext:build', 'ext:install-service'));
+gulp.task('webpack-reactviews', async (done) => {
+	exec('yarn webpack');
+	done();
+});
+
+gulp.task('build', gulp.series('clean', 'ext:build', 'ext:install-service', 'webpack-reactviews'));
 
 gulp.task('watch-src', function () {
 	return gulp.watch('./src/**/*.ts', gulp.series('ext:compile-src'))
@@ -461,7 +466,7 @@ gulp.task('watch-tests', function () {
 });
 
 gulp.task('watch-reactviews', function () {
-	return gulp.watch(['./src/reactviews/**/*', './typings/**/*', './src/sharedInterfaces/**/*'], gulp.series('ext:compile-reactviews'))
+	return gulp.watch(['./src/reactviews/**/*', './typings/**/*', './src/sharedInterfaces/**/*'], gulp.series('ext:compile-reactviews', 'webpack-reactviews'))
 });
 
 // Do a full build first so we have the latest compiled files before we start watching for more changes
