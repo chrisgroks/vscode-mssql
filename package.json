@@ -126,7 +126,7 @@
     "gulp-sourcemaps": "^1.6.0",
     "gulp-typescript": "^5.0.1",
     "gulp-uglify": "^2.0.0",
-    "husky": "^9.0.11",
+    "husky": "^9.1.6",
     "istanbul": "^0.4.5",
     "npm-run-all": "^4.1.5",
     "pm-mocha-jenkins-reporter": "^0.2.6",
@@ -202,23 +202,23 @@
           "icon": "media/server_page_dark.svg"
         }
       ],
-			"panel": [
-				{
-					"id": "queryResult",
-					"title": "Query Result",
-					"icon": "media/SignIn.svg"
-				}
-			]
+      "panel": [
+        {
+          "id": "queryResult",
+          "title": "Query Result",
+          "icon": "media/SignIn.svg"
+        }
+      ]
     },
     "views": {
-			"queryResult": [
-				{
-					"type": "webview",
-					"id": "queryResult",
-					"name": "%extension.queryResult%",
+      "queryResult": [
+        {
+          "type": "webview",
+          "id": "queryResult",
+          "name": "%extension.queryResult%",
           "when": "config.mssql.enableNewQueryResultFeature"
-				}
-			],
+        }
+      ],
       "objectExplorer": [
         {
           "id": "objectExplorer",
