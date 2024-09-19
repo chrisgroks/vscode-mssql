@@ -150,9 +150,11 @@ export const DesignerTable = ({
 
     const getRowError = (index: number): string | undefined => {
         const issue = state?.state.issues?.find((i) => {
+            if (!i.propertyPath) {
+                return false;
+            }
             return (
-                i.propertyPath!.join(".") ===
-                [...componentPath, index].join(".")
+                i.propertyPath.join(".") === [...componentPath, index].join(".")
             );
         });
         return issue?.description ?? undefined;
@@ -203,6 +205,7 @@ export const DesignerTable = ({
                                 appearance="subtle"
                                 size="small"
                                 icon={<NavigationFilled />}
+                                id={`table-cell-${state?.state.tableInfo?.id}-${componentPath.join("-")}_${row.rowId}-dragHandle`}
                             />
                         )}
                         {getRowError(row.rowId as number) &&
@@ -336,6 +339,8 @@ export const DesignerTable = ({
         undefined,
     );
 
+    const [isSpaceBarPressed, setIsSpaceBarPressed] = useState<boolean>(false);
+
     return (
         <div>
             <fluentui.Toolbar size="small">
@@ -446,6 +451,41 @@ export const DesignerTable = ({
                                 onDragStart={() => {
                                     setDraggedOverRowId(undefined);
                                     setDraggedRowId(index);
+                                }}
+                                onKeyDown={(event: any) => {
+                                    if (isSpaceBarPressed) {
+                                        switch (event.code) {
+                                            case "ArrowDown":
+                                                if (index < rows.length - 1) {
+                                                    moveRows(index, index + 1);
+                                                    const button =
+                                                        document.getElementById(
+                                                            `table-cell-${state?.state.tableInfo?.id}-${componentPath.join("-")}_${index + 1}-dragHandle`,
+                                                        );
+                                                    button?.focus();
+                                                }
+                                                break;
+                                            case "ArrowUp":
+                                                if (index > 0) {
+                                                    moveRows(index, index - 1);
+                                                    const button =
+                                                        document.getElementById(
+                                                            `table-cell-${state?.state.tableInfo?.id}-${componentPath.join("-")}_${index - 1}-dragHandle`,
+                                                        );
+                                                    button?.focus();
+                                                }
+                                                break;
+                                        }
+                                    } else {
+                                        if (event.code === "Space") {
+                                            setIsSpaceBarPressed(true);
+                                        }
+                                    }
+                                }}
+                                onKeyUp={(event: any) => {
+                                    if (event.code === "Space") {
+                                        setIsSpaceBarPressed(false);
+                                    }
                                 }}
                             >
                                 {columnsDef.map((column, columnIndex) => {

@@ -126,66 +126,90 @@ export const DesignerPropertiesPane = () => {
                                                 switch (item.componentType) {
                                                     case "checkbox":
                                                         return (
-                                                            <DesignerCheckbox
-                                                                UiArea="PropertiesView"
-                                                                component={item}
-                                                                model={
-                                                                    modelValue as CheckBoxProperties
-                                                                }
-                                                                componentPath={[
-                                                                    ...propertiesPaneData!
-                                                                        .componentPath,
-                                                                    item.propertyName,
-                                                                ]}
-                                                            />
+                                                            <div
+                                                                key={`${item.propertyName}`}
+                                                            >
+                                                                <DesignerCheckbox
+                                                                    UiArea="PropertiesView"
+                                                                    component={
+                                                                        item
+                                                                    }
+                                                                    model={
+                                                                        modelValue as CheckBoxProperties
+                                                                    }
+                                                                    componentPath={[
+                                                                        ...propertiesPaneData!
+                                                                            .componentPath,
+                                                                        item.propertyName,
+                                                                    ]}
+                                                                />
+                                                            </div>
                                                         );
                                                     case "input":
                                                         return (
-                                                            <DesignerInputBox
-                                                                UiArea="PropertiesView"
-                                                                component={item}
-                                                                model={
-                                                                    modelValue as InputBoxProperties
-                                                                }
-                                                                componentPath={[
-                                                                    ...propertiesPaneData!
-                                                                        .componentPath,
-                                                                    item.propertyName,
-                                                                ]}
-                                                            />
+                                                            <div
+                                                                key={`${item.propertyName}`}
+                                                            >
+                                                                <DesignerInputBox
+                                                                    UiArea="PropertiesView"
+                                                                    component={
+                                                                        item
+                                                                    }
+                                                                    model={
+                                                                        modelValue as InputBoxProperties
+                                                                    }
+                                                                    componentPath={[
+                                                                        ...propertiesPaneData!
+                                                                            .componentPath,
+                                                                        item.propertyName,
+                                                                    ]}
+                                                                />
+                                                            </div>
                                                         );
                                                     case "dropdown":
                                                         return (
-                                                            <DesignerDropdown
-                                                                UiArea="PropertiesView"
-                                                                component={item}
-                                                                model={
-                                                                    modelValue as DropDownProperties
-                                                                }
-                                                                componentPath={[
-                                                                    ...propertiesPaneData!
-                                                                        .componentPath,
-                                                                    item.propertyName,
-                                                                ]}
-                                                            />
+                                                            <div
+                                                                key={`${item.propertyName}`}
+                                                            >
+                                                                <DesignerDropdown
+                                                                    UiArea="PropertiesView"
+                                                                    component={
+                                                                        item
+                                                                    }
+                                                                    model={
+                                                                        modelValue as DropDownProperties
+                                                                    }
+                                                                    componentPath={[
+                                                                        ...propertiesPaneData!
+                                                                            .componentPath,
+                                                                        item.propertyName,
+                                                                    ]}
+                                                                />
+                                                            </div>
                                                         );
                                                     case "table":
                                                         return (
-                                                            <DesignerTable
-                                                                UiArea="PropertiesView"
-                                                                component={item}
-                                                                model={
-                                                                    modelValue as DesignerTableProperties
-                                                                }
-                                                                componentPath={[
-                                                                    ...propertiesPaneData!
-                                                                        .componentPath,
-                                                                    item.propertyName,
-                                                                ]}
-                                                                loadPropertiesTabData={
-                                                                    false
-                                                                }
-                                                            />
+                                                            <div
+                                                                key={`${item.propertyName}`}
+                                                            >
+                                                                <DesignerTable
+                                                                    UiArea="PropertiesView"
+                                                                    component={
+                                                                        item
+                                                                    }
+                                                                    model={
+                                                                        modelValue as DesignerTableProperties
+                                                                    }
+                                                                    componentPath={[
+                                                                        ...propertiesPaneData!
+                                                                            .componentPath,
+                                                                        item.propertyName,
+                                                                    ]}
+                                                                    loadPropertiesTabData={
+                                                                        false
+                                                                    }
+                                                                />
+                                                            </div>
                                                         );
                                                 }
                                             })}
