@@ -632,7 +632,7 @@
       },
       {
         "command": "mssql.newQuery2",
-        "title": "%mssql.newQuery2%",
+        "title": "%mssql.newQuery%",
         "category": "MS SQL"
       },
       {
