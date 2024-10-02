@@ -9,6 +9,7 @@ import { NodeInfo } from "../models/contracts/objectExplorer/nodeInfo";
 import { ObjectExplorerUtils } from "./objectExplorerUtils";
 import * as Constants from "../constants/constants";
 import { IConnectionInfo, ITreeNodeInfo, ObjectMetadata } from "vscode-mssql";
+import * as path from "path";
 
 export class TreeNodeInfo extends vscode.TreeItem implements ITreeNodeInfo {
     private _nodePath: string;
@@ -51,7 +52,20 @@ export class TreeNodeInfo extends vscode.TreeItem implements ITreeNodeInfo {
         this._filterableProperties = filterProperties;
         this._metadata = objectMetadata;
         this._filters = filters;
-        this.iconPath = ObjectExplorerUtils.iconPath(this.nodeType);
+        this.iconPath = TreeNodeInfo.iconPath(this.nodeType);
+    }
+
+    public static iconPath(label: string): string {
+        if (label) {
+            if (label === Constants.disconnectedServerLabel) {
+                // if disconnected
+                label = `${Constants.serverLabel}_red`;
+            } else if (label === Constants.serverLabel) {
+                // if connected
+                label += "_green";
+            }
+            return path.join(ObjectExplorerUtils.rootPath, `${label}.svg`);
+        }
     }
 
     public static fromNodeInfo(
