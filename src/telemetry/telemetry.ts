@@ -14,9 +14,10 @@ import {
     TelemetryActions,
     TelemetryViews,
 } from "../sharedInterfaces/telemetry";
+import * as constants from "../constants/constants";
 
 const packageJson = vscode.extensions.getExtension(
-    vscodeMssql.extension.name,
+    constants.extensionId,
 ).packageJSON;
 
 let packageInfo = {
