@@ -4,11 +4,11 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as path from "path";
-import { TreeNodeInfo } from "./treeNodeInfo";
 import { IConnectionProfile } from "../models/interfaces";
 import * as Constants from "../constants/constants";
 import * as LocalizedConstants from "../constants/locConstants";
 import * as vscodeMssql from "vscode-mssql";
+import { TreeNodeInfo } from "./treeNodeInfo";
 import { TreeNodeType } from "./connectTreeNode";
 
 export class ObjectExplorerUtils {
@@ -16,19 +16,6 @@ export class ObjectExplorerUtils {
         __dirname,
         "objectTypes",
     );
-
-    public static iconPath(label: string): string {
-        if (label) {
-            if (label === Constants.disconnectedServerLabel) {
-                // if disconnected
-                label = `${Constants.serverLabel}_red`;
-            } else if (label === Constants.serverLabel) {
-                // if connected
-                label += "_green";
-            }
-            return path.join(ObjectExplorerUtils.rootPath, `${label}.svg`);
-        }
-    }
 
     public static getNodeUri(node: TreeNodeType): string {
         let profile: IConnectionProfile;
