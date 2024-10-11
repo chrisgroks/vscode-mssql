@@ -1263,6 +1263,11 @@
           "description": "%mssql.enableQueryHistoryFeature%",
           "scope": "window"
         },
+        "mssql.tableDesigner.preloadDatabaseModel": {
+          "type": "boolean",
+          "default": false,
+          "description": "%mssql.tableDesigner.preloadDatabaseModel%"
+        },
         "mssql.tracingLevel": {
           "type": "string",
           "description": "%mssql.tracingLevel%",
