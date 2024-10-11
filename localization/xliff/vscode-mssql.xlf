@@ -1708,6 +1708,9 @@
     <trans-unit id="mssql.objectExplorer.groupBySchema">
       <source xml:lang="en">When enabled, the database objects in Object Explorer will be categorized by schema.</source>
     </trans-unit>
+    <trans-unit id="mssql.tableDesigner.preloadDatabaseModel">
+      <source xml:lang="en">Whether to preload the database model when the database node in the object explorer is expanded. When enabled, the loading time of table designer can be reduced. Note: You might see higher than normal memory usage if you need to expand a lot of database nodes.</source>
+    </trans-unit>
     <trans-unit id="mssql.saveAsCsv.textIdentifier">
       <source xml:lang="en">[Optional] Character used for enclosing text fields when saving results as CSV</source>
     </trans-unit>
