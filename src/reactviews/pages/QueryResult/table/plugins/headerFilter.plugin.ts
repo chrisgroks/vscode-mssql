@@ -125,13 +125,28 @@ export class HeaderFilter<T extends Slick.SlickData> {
             // const menuLeft = offset.left + filterButton.offsetWidth + this.menu.offsetWidth <= window.innerWidth ? offset.left + filterButton.offsetWidth : window.innerWidth - this.menu.offsetWidth;
         }
 
-        const $popup = jQuery(
-            '<div id="popup-menu">' +
-                `<button id="sort-ascending" type="button" icon="slick-header-menuicon.ascending" class="sort-btn">${locConstants.queryResult.sortAscending}</button>` +
-                `<button id="sort-descending" type="button" icon="slick-header-menuicon.descending" class="sort-btn">${locConstants.queryResult.sortDescending}</button>` +
-                `<button id="close-popup" type="button" class="sort-btn">${locConstants.queryResult.cancel}</button>` +
-                "</div>",
-        );
+        const $popup = jQuery(`
+            <div id="popup-menu">
+                <div class="sort-options">
+                    <button id="sort-ascending" type="button" class="sort-btn">${locConstants.queryResult.sortAscending}</button>
+                    <button id="sort-descending" type="button" class="sort-btn">${locConstants.queryResult.sortDescending}</button>
+                </div>
+                <div class="search-bar">
+                    <input type="text" id="search-input" placeholder="Search..." />
+                    <span class="selection-count">0 Selected</span>
+                </div>
+                <div class="checkbox-list">
+                    ${this.generateCheckboxList()}
+                </div>
+                <div class="footer">
+                    <button id="ok" type="button">OK</button>
+                    <button id="clear" type="button">Clear</button>
+                    <button id="cancel" type="button">Cancel</button>
+                </div>
+            </div>
+        `);
+
+        $popup.appendTo(document.body);
 
         if (offset) {
             $popup.css({
@@ -192,6 +207,26 @@ export class HeaderFilter<T extends Slick.SlickData> {
         function openPopup($popup: JQuery<HTMLElement>) {
             $popup.fadeIn();
         }
+    }
+
+    private generateCheckboxList(): string {
+        const items = [
+            "Product1",
+            "Product2",
+            "Product3",
+            "Product4",
+            "Product5",
+        ];
+        return items
+            .map(
+                (item) => `
+            <div>
+                <input type="checkbox" id="${item}" />
+                <label for="${item}">${item}</label>
+            </div>
+        `,
+            )
+            .join("");
     }
 
     private async handleMenuItemClick(
