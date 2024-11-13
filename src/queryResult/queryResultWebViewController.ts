@@ -108,6 +108,22 @@ export class QueryResultWebviewController extends ReactWebviewViewController<
                         result.rows[0][0].displayValue,
                     );
             }
+            // if we are on the last result set and still don't have any xml plans
+            // then we should not show the query plan
+            else if (
+                message.batchId ===
+                    this.resultSetLength(currentState.resultSetSummaries) - 1 &&
+                message.resultId ===
+                    this.resultSetLength(
+                        currentState.resultSetSummaries[message.batchId],
+                    ) -
+                        1 &&
+                (!currentState.executionPlanState?.xmlPlans ||
+                    !currentState.executionPlanState.xmlPlans.length)
+            ) {
+                currentState.isExecutionPlan = false;
+                currentState.actualPlanEnabled = false;
+            }
             this._queryResultStateMap.set(message.uri, currentState);
             return result;
         });
@@ -207,8 +223,9 @@ export class QueryResultWebviewController extends ReactWebviewViewController<
                             // Check for non-empty XML plans and result summaries
                             currentResultState.executionPlanState.xmlPlans
                                 .length &&
-                            Object.keys(currentResultState.resultSetSummaries)
-                                .length &&
+                            this.resultSetLength(
+                                currentResultState.resultSetSummaries,
+                            ) &&
                             // Verify XML plans match expected number of result sets
                             currentResultState.executionPlanState.xmlPlans
                                 .length ===
@@ -351,7 +368,7 @@ export class QueryResultWebviewController extends ReactWebviewViewController<
         resultSetSummaries: qr.QueryResultWebviewState["resultSetSummaries"],
         actualPlanEnabled: boolean,
     ): number {
-        const summariesLength = Object.keys(resultSetSummaries).length;
+        const summariesLength = this.resultSetLength(resultSetSummaries);
         if (!actualPlanEnabled) {
             return summariesLength;
         }
@@ -369,5 +386,9 @@ export class QueryResultWebviewController extends ReactWebviewViewController<
             });
         });
         return total;
+    }
+
+    public resultSetLength(resultSetSummaries: any): number {
+        return Object.keys(resultSetSummaries).length;
     }
 }
