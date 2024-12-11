@@ -138,6 +138,7 @@ export const FormField = <
     return (
         <div className={formStyles.formComponentDiv} key={idx}>
             <Field
+                size="small"
                 validationMessage={
                     component.validation?.validationMessage ?? ""
                 }
