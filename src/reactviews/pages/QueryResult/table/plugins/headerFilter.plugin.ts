@@ -467,6 +467,7 @@ export class HeaderFilter<T extends Slick.SlickData> {
                 sorted: this.columnDef.sorted,
             };
         }
+        //TODO: this doesn't preserve the state of other filters
         const record: GridFilters = {
             gridId: this.gridId,
             columnFilters: columnFilterState,

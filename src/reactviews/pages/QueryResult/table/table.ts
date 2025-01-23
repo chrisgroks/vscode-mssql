@@ -217,19 +217,23 @@ export class Table<T extends Slick.SlickData> implements IThemable {
      * @returns true if filters were successfully loaded and applied, false if no filters were found
      */
     public async setupFilterState(): Promise<boolean> {
-        this.columns.forEach((column) => {
-            if (column.field) {
-                const filters =
-                    this.queryResultState.state.filterState[this.gridId];
-                if (filters) {
-                    (<FilterableColumn<T>>column).filterValues =
-                        //@ts-ignore
-                        filters.columnFilters.filterValues[column.field];
+        const filters = this.queryResultState.state.filterState[this.gridId];
+        if (filters) {
+            this.columns.forEach((column) => {
+                if (column.field) {
+                    if (filters.columnFilters.columnDef === column.field) {
+                        console.log("filtervalues applied");
+                        (<FilterableColumn<T>>column).filterValues =
+                            filters.columnFilters.filterValues;
+                    }
                 } else {
                     return false;
                 }
-            }
-        });
+            });
+        } else {
+            return false;
+        }
+
         await this._data.filter(this.columns);
         return true;
     }

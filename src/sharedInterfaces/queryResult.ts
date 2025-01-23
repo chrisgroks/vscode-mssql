@@ -92,6 +92,7 @@ export interface QueryResultReducers
     setFilterState: {
         filterState: GridFilters;
     };
+    getFilterState: GridFilters;
     /**
      * Gets the execution plan graph from the provider for given uri
      * @param uri  the uri for which to get graphs for
