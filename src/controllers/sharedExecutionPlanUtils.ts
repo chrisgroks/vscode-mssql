@@ -100,6 +100,7 @@ export async function createExecutionPlanGraphs(
             graphFileContent: plan,
             graphFileType: `.${sqlPlanLanguageId}`,
         };
+        vscode.window.showInformationMessage(plan);
         try {
             newState.executionPlanGraphs = newState.executionPlanGraphs.concat(
                 (await executionPlanService.getExecutionPlan(planFile)).graphs,
