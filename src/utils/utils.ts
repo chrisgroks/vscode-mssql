@@ -42,15 +42,9 @@ export async function getUniqueFilePath(
         while (await exists(`${basename}${counter}.${fileExtension}`, folder)) {
             counter += 1;
         }
-        uniqueFileName = vscode.Uri.joinPath(
-            folder,
-            `${basename}${counter}.${fileExtension}`,
-        );
+        uniqueFileName = vscode.Uri.joinPath(folder, `${basename}${counter}`);
     } else {
-        uniqueFileName = vscode.Uri.joinPath(
-            folder,
-            `${basename}.${fileExtension}`,
-        );
+        uniqueFileName = vscode.Uri.joinPath(folder, `${basename}`);
     }
     return uniqueFileName;
 }

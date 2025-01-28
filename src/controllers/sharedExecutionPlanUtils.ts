@@ -33,7 +33,7 @@ export async function saveExecutionPlan(
     const saveUri = await vscode.window.showSaveDialog({
         defaultUri: await getUniqueFilePath(folder, `plan`, sqlPlanLanguageId),
         filters: {
-            [executionPlanFileFilter]: [`.${sqlPlanLanguageId}`],
+            [executionPlanFileFilter]: [`${sqlPlanLanguageId}`],
         },
     });
 
@@ -123,7 +123,9 @@ export async function createExecutionPlanGraphs(
         }
     }
     state.executionPlanState = newState;
-    state.executionPlanState.totalCost = calculateTotalCost(state);
+    if (newState.loadState == ApiStatus.Loaded) {
+        state.executionPlanState.totalCost = calculateTotalCost(state);
+    }
 
     return state;
 }
