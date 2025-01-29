@@ -42,17 +42,52 @@ export async function getUniqueFilePath(
         while (await exists(`${basename}${counter}.${fileExtension}`, folder)) {
             counter += 1;
         }
-        uniqueFileName = vscode.Uri.joinPath(
-            folder,
-            `${basename}${counter}.${fileExtension}`,
-        );
+        uniqueFileName = vscode.Uri.joinPath(folder, `${basename}${counter}`);
     } else {
-        uniqueFileName = vscode.Uri.joinPath(
-            folder,
-            `${basename}.${fileExtension}`,
-        );
+        uniqueFileName = vscode.Uri.joinPath(folder, `${basename}`);
     }
     return uniqueFileName;
+}
+
+/**
+ * Adds formatting to an xml string
+ */
+export function formatXml(xmlContents: string): string {
+    try {
+        let formattedXml = "";
+        let currentLevel = 0;
+
+        const elements = xmlContents.match(/<[^>]*>/g);
+        for (const element of elements) {
+            if (element.startsWith("</")) {
+                // Closing tag: decrement the level
+                currentLevel--;
+            }
+            formattedXml += "\t".repeat(currentLevel) + element + "\n";
+            if (
+                element.startsWith("<") &&
+                !element.startsWith("</") &&
+                !element.endsWith("/>")
+            ) {
+                // Opening tag: increment the level
+                currentLevel++;
+            }
+        }
+        return formattedXml;
+    } catch {
+        return xmlContents;
+    }
+}
+
+/**
+ * Adds formatting to a JSON string
+ */
+export function formatJson(jsonContents: string): string {
+    try {
+        return JSON.stringify(JSON.parse(jsonContents), null, 2);
+    } catch {
+        return jsonContents;
+    }
 }
 
 /**

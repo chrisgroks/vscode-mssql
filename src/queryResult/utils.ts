@@ -22,6 +22,7 @@ import { sendActionEvent } from "../telemetry/telemetry";
 import * as qr from "../sharedInterfaces/queryResult";
 import { QueryResultWebviewPanelController } from "./queryResultWebviewPanelController";
 import { QueryResultWebviewController } from "./queryResultWebViewController";
+import { formatJson, formatXml } from "../utils/utils";
 
 export function getNewResultPaneViewColumn(
     uri: string,
@@ -278,9 +279,15 @@ export function registerCommonRequestHandlers(
     webviewController.registerReducer(
         "openFileThroughLink",
         async (state, payload) => {
-            // TO DO: add formatting? ADS doesn't do this, but it may be nice...
+            let formattedContent = payload.content;
+            if (payload.type == "xml") {
+                formattedContent = formatXml(formattedContent);
+            } else if (payload.type == "json") {
+                formattedContent = formatJson(formattedContent);
+            }
+
             const newDoc = await vscode.workspace.openTextDocument({
-                content: payload.content,
+                content: formattedContent,
                 language: payload.type,
             });
 
