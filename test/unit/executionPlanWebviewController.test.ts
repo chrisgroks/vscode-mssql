@@ -16,6 +16,7 @@ import { contents } from "../resources/testsqlplan";
 import * as TypeMoq from "typemoq";
 import SqlToolsServiceClient from "../../src/languageservice/serviceclient";
 import { GetExecutionPlanRequest } from "../../src/models/contracts/executionPlan";
+import { formatXml } from "../../src/utils/utils";
 
 suite("ExecutionPlanWebviewController", () => {
     let sandbox: sinon.SinonSandbox;
@@ -515,7 +516,7 @@ suite("Execution Plan Utilities", () => {
 
     test("formatXml: should return original xml contents if it is not a valid xml file", () => {
         const invalidXml = "</";
-        const result = epUtils.formatXml(invalidXml);
+        const result = formatXml(invalidXml);
         assert.strictEqual(
             result,
             invalidXml,

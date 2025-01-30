@@ -266,6 +266,7 @@ export class LocConstants {
             expandAll: l10n.t("Expand All"),
             collapseAll: l10n.t("Collapse All"),
             filterAnyField: l10n.t("Filter for any field..."),
+            loading: l10n.t("Loading execution plan..."),
         };
     }
 
