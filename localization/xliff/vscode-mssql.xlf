@@ -454,6 +454,9 @@
     <trans-unit id="++CODE++1a77d555bedbf97481907d505c8c8ba64d32d3525b77122e16178dd4054c3c93">
       <source xml:lang="en">Ends With</source>
     </trans-unit>
+    <trans-unit id="++CODE++ae4c1485635bff4ff7184cf4dac59b0083b70338aa0a9427895b1109075f4b30">
+      <source xml:lang="en">Enter Width</source>
+    </trans-unit>
     <trans-unit id="++CODE++b35ebaaf32f469f2fa86b0b2fb67e6f51fae3fb8e6ceaeaea97c2696321a8ee4">
       <source xml:lang="en">Enter new column width</source>
     </trans-unit>
@@ -1039,6 +1042,9 @@
     <trans-unit id="++CODE++4f98318295cf61965501b5ff934574dfd3efea58641100c01dfa70131a732b31">
       <source xml:lang="en">Remove {0}</source>
       <note>{0} is the object type</note>
+    </trans-unit>
+    <trans-unit id="++CODE++2956e06ac0651084bbd5558dfe469615e9a5fc3072f60a09a9cb3c597a19324c">
+      <source xml:lang="en">Resize</source>
     </trans-unit>
     <trans-unit id="++CODE++ae6d9c313ef115d3be932d158acd74f5ab4db5c068cdc2c10ade081168b185d5">
       <source xml:lang="en">Resource Group</source>
