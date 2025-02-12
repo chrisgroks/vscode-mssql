@@ -274,7 +274,9 @@ export class Table<T extends Slick.SlickData> implements IThemable {
     }
 
     private handleLinkClick(cell: Slick.Cell): void {
+        if (!cell) return;
         const columnInfo = this.resultSetSummary.columnInfo[cell.cell - 1];
+        console.log("column info: ", columnInfo);
         if (columnInfo.isXml || columnInfo.isJson) {
             this.linkHandler(
                 this.getCellValue(cell.row, cell.cell),

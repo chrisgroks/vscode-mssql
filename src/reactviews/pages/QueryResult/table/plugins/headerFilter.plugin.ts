@@ -184,12 +184,12 @@ export class HeaderFilter<T extends Slick.SlickData> {
                 `<button id="sort-descending" type="button" icon="slick-header-menuicon.descending" class="sort-btn">${locConstants.queryResult.sortDescending}</button>` +
                 `<div style="display: flex; align-items: center; margin-bottom: 8px;">` +
                 `<input type="checkbox" id="select-all-checkbox" style="margin-right: 8px;" />` +
-                `<input type="text" id="search-input" class="searchbox" placeholder=${locConstants.queryResult.search}  />` +
+                `<input type="text" id="search-input" class="inputbox" placeholder=${locConstants.queryResult.search}  />` +
                 `</div>` +
                 `<div id="checkbox-list" class="checkbox-list"></div>` +
-                `<button id="apply-${this.columnDef.id}" type="button" class="filter-btn-primary">${locConstants.queryResult.apply}</button>` +
-                `<button id="clear-${this.columnDef.id}" type="button" class="filter-btn">${locConstants.queryResult.clear}</button>` +
-                `<button id="close-popup-${this.columnDef.id}" type="button" class="filter-btn">${locConstants.queryResult.close}</button>` +
+                `<button id="apply-${this.columnDef.id}" type="button" class="btn-primary">${locConstants.queryResult.apply}</button>` +
+                `<button id="clear-${this.columnDef.id}" type="button" class="btn">${locConstants.queryResult.clear}</button>` +
+                `<button id="close-popup-${this.columnDef.id}" type="button" class="btn">${locConstants.queryResult.close}</button>` +
                 "</div>",
         );
 
