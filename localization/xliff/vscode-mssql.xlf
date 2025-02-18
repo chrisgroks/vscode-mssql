@@ -306,6 +306,9 @@
       <source xml:lang="en">Connection not found for uri &quot;{0}&quot;.</source>
       <note>{0} is the uri</note>
     </trans-unit>
+    <trans-unit id="++CODE++8df69059108e844cc6c05300c3a9c4f555efbaf20dca62bab008afbdd8aa0015">
+      <source xml:lang="en">Connection string copied to clipboard.</source>
+    </trans-unit>
     <trans-unit id="++CODE++e0626fd341a12763ec4285d858397c3d4ba2507c9ef567f1284c658bde195cd2">
       <source xml:lang="en">Connection string is required</source>
     </trans-unit>
