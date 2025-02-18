@@ -144,6 +144,7 @@ export interface ConnectionDialogContextProps
     refreshConnectionsList: () => void;
     deleteSavedConnection(connection: IConnectionDialogProfile): void;
     removeRecentConnection(connection: IConnectionDialogProfile): void;
+    copyConnectionString: () => void;
 }
 
 export enum AuthenticationType {
@@ -180,4 +181,5 @@ export interface ConnectionDialogReducers {
     removeRecentConnection: {
         connection: IConnectionDialogProfile;
     };
+    copyConnectionString: {};
 }

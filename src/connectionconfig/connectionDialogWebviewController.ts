@@ -426,6 +426,17 @@ export class ConnectionDialogWebviewController extends ReactWebviewPanelControll
                 return state;
             },
         );
+
+        this.registerReducer("copyConnectionString", async (state) => {
+            const connectionString = await this.getConnectionString();
+            await vscode.env.clipboard.writeText(connectionString);
+
+            this.vscodeWrapper.showInformationMessage(
+                l10n.t("Connection string copied to clipboard."),
+            );
+
+            return state;
+        });
     }
 
     //#region Helpers
@@ -670,6 +681,22 @@ export class ConnectionDialogWebviewController extends ReactWebviewPanelControll
         const cleanedConnection = this.cleanConnection(connectionProfile);
 
         return await this.validateConnectionProfile(cleanedConnection);
+    }
+
+    private async getConnectionString(): Promise<string> {
+        const cleanedConnection: IConnectionDialogProfile =
+            this.cleanConnection(this.state.connectionProfile);
+
+        const connectionDetails =
+            await this._mainController.connectionManager.createConnectionDetails(
+                cleanedConnection,
+            );
+
+        const result =
+            await this._mainController.connectionManager.getConnectionString(
+                connectionDetails,
+            );
+        return result;
     }
 
     private async connectHelper(

@@ -282,6 +282,7 @@ export default class MainController implements vscode.Disposable {
             this._event.on(Constants.cmdDisableActualPlan, () => {
                 this.onToggleActualPlan(false);
             });
+
             this.initializeObjectExplorer();
 
             this.registerCommandWithArgs(

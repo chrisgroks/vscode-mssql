@@ -67,6 +67,13 @@ export const ConnectionFormPage = () => {
                     {locConstants.connectionDialog.advancedSettings}
                 </Button>
                 <div className={formStyles.formNavTrayRight}>
+                    <Button
+                        onClick={(_event) => {
+                            context.copyConnectionString();
+                        }}
+                    >
+                        Copy Connection String
+                    </Button>
                     <ConnectButton className={formStyles.formNavTrayButton} />
                 </div>
             </div>

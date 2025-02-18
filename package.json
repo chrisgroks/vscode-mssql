@@ -598,7 +598,7 @@
         },
         {
           "command": "mssql.editConnection",
-          "when": "config.mssql.enableRichExperiences"
+          "when": "false"
         }
       ],
       "webview/context": [

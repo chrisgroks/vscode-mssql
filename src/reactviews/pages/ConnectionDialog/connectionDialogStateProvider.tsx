@@ -103,6 +103,9 @@ const ConnectionDialogStateProvider: React.FC<
                         connection: connection,
                     });
                 },
+                copyConnectionString: function (): void {
+                    webviewState.extensionRpc.action("copyConnectionString");
+                },
             }}
         >
             {children}
