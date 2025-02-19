@@ -500,13 +500,13 @@ export class ObjectExplorerService {
                 nodeLabel,
                 ObjectExplorerService.disconnectedNodeContextValue,
                 TreeItemCollapsibleState.Collapsed,
-                undefined,
-                undefined,
+                undefined, // nodePath
+                undefined, // nodeStatus
                 Constants.disconnectedServerNodeType,
-                undefined,
+                undefined, // sessionId
                 conn,
-                undefined,
-                undefined,
+                undefined, // parentNode
+                undefined, // filterProperties
             );
             this._rootTreeNodeArray.push(node);
         }
@@ -582,16 +582,11 @@ export class ObjectExplorerService {
                     this._sessionIdToPromiseMap.delete(element.sessionId);
 
                     // node expansion
-                    let promise = new Deferred<TreeNodeInfo[]>();
-                    await this.expandNode(element, element.sessionId, promise);
-                    let children = await promise;
-                    if (children) {
-                        // clean expand session promise
-                        this.cleanExpansionPromise(element);
-                        return children;
-                    } else {
-                        return undefined;
-                    }
+                    return await this.expandNodeHelper(
+                        element,
+                        // element,
+                        element.sessionId,
+                    );
                 } else {
                     // start node session
                     let promise = new Deferred<TreeNodeInfo>();
@@ -609,11 +604,18 @@ export class ObjectExplorerService {
                                 await this._connectionManager.connectionStore.lookupPassword(
                                     profile,
                                 );
-                            if (password) {
+                            if (password && false /* temporarily disable */) {
                                 return this.createSignInNode(element);
                             } else {
                                 return this.createConnectTreeNode(element);
                             }
+                        } else {
+                            //this._objectExplorerProvider.refresh(element); // force refresh the database node to pick up the new "connected" status
+                            return await this.expandNodeHelper(
+                                node,
+                                // element,
+                                sessionId,
+                            );
                         }
                     } else {
                         // If node create session failed (server wasn't found)
@@ -646,6 +648,24 @@ export class ObjectExplorerService {
                 // otherwise returned the cached nodes
                 return this.sortByServerName(this._rootTreeNodeArray);
             }
+        }
+    }
+
+    private async expandNodeHelper(
+        node: TreeNodeInfo,
+        // element: TreeNodeInfo,
+        sessionId: string,
+    ): Promise<TreeNodeInfo[] | undefined> {
+        const expandPromise = new Deferred<TreeNodeInfo[]>();
+        await this.expandNode(node, sessionId, expandPromise);
+        const children = await expandPromise;
+
+        if (children) {
+            // clean expand session promise
+            this.cleanExpansionPromise(node); // element
+            return children;
+        } else {
+            return undefined;
         }
     }
 
