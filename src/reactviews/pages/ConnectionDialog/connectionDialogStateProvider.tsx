@@ -106,6 +106,11 @@ const ConnectionDialogStateProvider: React.FC<
                 copyConnectionString: function (): void {
                     webviewState.extensionRpc.action("copyConnectionString");
                 },
+                openLoadFromConnectionStringDialog: function (): void {
+                    webviewState.extensionRpc.action(
+                        "openLoadFromConnectionStringDialog",
+                    );
+                },
             }}
         >
             {children}

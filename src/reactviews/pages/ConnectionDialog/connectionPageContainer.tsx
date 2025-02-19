@@ -11,16 +11,18 @@ import {
     ConnectionDialogWebviewState,
     ConnectionInputMode,
     IConnectionDialogProfile,
+    LoadFromConnectionStringDialogProps,
     TrustServerCertDialogProps,
 } from "../../../sharedInterfaces/connectionDialog";
 import {
+    Button,
     Field,
     Image,
     MessageBar,
     Radio,
     RadioGroup,
 } from "@fluentui/react-components";
-import { Form20Regular, SlideText20Regular } from "@fluentui/react-icons";
+import { Form20Regular } from "@fluentui/react-icons";
 import { FormField, useFormStyles } from "../../common/forms/form.component";
 import { ReactNode, useContext } from "react";
 
@@ -35,6 +37,7 @@ import { TrustServerCertificateDialog } from "./components/trustServerCertificat
 import { locConstants } from "../../common/locConstants";
 import { themeType } from "../../common/utils";
 import { AddFirewallRuleDialog } from "./components/addFirewallRule.component";
+import { LoadFromConnectionStringDialog } from "./components/loadFromConnectionString.component";
 
 function renderContent(
     connectionDialogContext: ConnectionDialogContextProps,
@@ -95,6 +98,14 @@ export const ConnectionInfoFormContainer = () => {
                         }
                     />
                 )}
+                {context.state.dialog?.type === "loadFromConnectionString" && (
+                    <LoadFromConnectionStringDialog
+                        dialogProps={
+                            context.state
+                                .dialog as LoadFromConnectionStringDialogProps
+                        }
+                    />
+                )}
 
                 <FormField
                     context={context}
@@ -136,25 +147,13 @@ export const ConnectionInfoFormContainer = () => {
                                             locConstants.connectionDialog
                                                 .parameters
                                         }
-                                    </div>
-                                }
-                            />
-                            <Radio
-                                value={ConnectionInputMode.ConnectionString}
-                                label={
-                                    <div
-                                        style={{
-                                            display: "flex",
-                                            alignItems: "center",
-                                        }}
-                                    >
-                                        <SlideText20Regular
-                                            style={{ marginRight: "8px" }}
-                                        />
-                                        {
-                                            locConstants.connectionDialog
-                                                .connectionString
-                                        }
+                                        <Button
+                                            onClick={() => {
+                                                context.openLoadFromConnectionStringDialog();
+                                            }}
+                                        >
+                                            Load from connection string
+                                        </Button>
                                     </div>
                                 }
                             />

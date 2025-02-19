@@ -20,6 +20,7 @@ import {
     AddFirewallRuleDialogProps,
     IConnectionDialogProfile,
     TrustServerCertDialogProps,
+    LoadFromConnectionStringDialogProps,
 } from "../sharedInterfaces/connectionDialog";
 import { ConnectionCompleteParams } from "../models/contracts/connection";
 import {
@@ -437,6 +438,17 @@ export class ConnectionDialogWebviewController extends ReactWebviewPanelControll
 
             return state;
         });
+
+        this.registerReducer(
+            "openLoadFromConnectionStringDialog",
+            async (state) => {
+                state.dialog = {
+                    type: "loadFromConnectionString",
+                    connectionString: await this.getConnectionString(),
+                } as LoadFromConnectionStringDialogProps;
+                return state;
+            },
+        );
     }
 
     //#region Helpers
@@ -692,10 +704,10 @@ export class ConnectionDialogWebviewController extends ReactWebviewPanelControll
                 cleanedConnection,
             );
 
-        const result =
-            await this._mainController.connectionManager.getConnectionString(
-                connectionDetails,
-            );
+        const result = "hello";
+        // await this._mainController.connectionManager.getConnectionString(
+        //     connectionDetails,
+        // );
         return result;
     }
 

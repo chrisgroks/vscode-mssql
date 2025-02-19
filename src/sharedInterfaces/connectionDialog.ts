@@ -55,7 +55,7 @@ export class ConnectionDialogWebviewState
 }
 
 export interface IDialogProps {
-    type: "trustServerCert" | "addFirewallRule";
+    type: "trustServerCert" | "addFirewallRule" | "loadFromConnectionString";
 }
 
 export interface TrustServerCertDialogProps extends IDialogProps {
@@ -68,6 +68,11 @@ export interface AddFirewallRuleDialogProps extends IDialogProps {
     message: string;
     clientIp: string;
     tenants: { name: string; id: string }[];
+}
+
+export interface LoadFromConnectionStringDialogProps extends IDialogProps {
+    type: "loadFromConnectionString";
+    connectionString: string;
 }
 
 export interface AzureSubscriptionInfo {
@@ -145,6 +150,7 @@ export interface ConnectionDialogContextProps
     deleteSavedConnection(connection: IConnectionDialogProfile): void;
     removeRecentConnection(connection: IConnectionDialogProfile): void;
     copyConnectionString: () => void;
+    openLoadFromConnectionStringDialog: () => void;
 }
 
 export enum AuthenticationType {
@@ -182,4 +188,5 @@ export interface ConnectionDialogReducers {
         connection: IConnectionDialogProfile;
     };
     copyConnectionString: {};
+    openLoadFromConnectionStringDialog: {};
 }
