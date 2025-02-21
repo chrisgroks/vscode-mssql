@@ -704,10 +704,16 @@ export class ConnectionDialogWebviewController extends ReactWebviewPanelControll
                 cleanedConnection,
             );
 
-        const result = "hello";
-        // await this._mainController.connectionManager.getConnectionString(
-        //     connectionDetails,
-        // );
+        let result = "";
+
+        if (connectionDetails) {
+            result =
+                await this._mainController.connectionManager.getConnectionString(
+                    connectionDetails,
+                    true /* includePassword */,
+                );
+        }
+
         return result;
     }
 
