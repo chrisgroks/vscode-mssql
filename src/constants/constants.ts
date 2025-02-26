@@ -17,7 +17,8 @@ export const connectionApplicationName = "vscode-mssql";
 export const outputChannelName = "MSSQL";
 export const connectionConfigFilename = "settings.json";
 export const connectionsArrayName = "connections";
-export const disconnectedServerLabel = "disconnectedServer";
+export const connectionGroupsArrayName = "connectionGroups";
+export const disconnectedServerNodeType = "disconnectedServer";
 export const serverLabel = "Server";
 export const folderLabel = "Folder";
 export const cmdRunQuery = "mssql.runQuery";
@@ -64,6 +65,7 @@ export const cmdObjectExplorerEnableGroupBySchemaCommand =
     "mssql.objectExplorer.enableGroupBySchema";
 export const cmdObjectExplorerDisableGroupBySchemaCommand =
     "mssql.objectExplorer.disableGroupBySchema";
+export const cmdEnableRichExperiencesCommand = "mssql.enableRichExperiences";
 export const cmdScriptSelect = "mssql.scriptSelect";
 export const cmdScriptCreate = "mssql.scriptCreate";
 export const cmdScriptDelete = "mssql.scriptDelete";
