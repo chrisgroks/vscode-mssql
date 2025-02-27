@@ -2071,12 +2071,12 @@ export default class MainController implements vscode.Disposable {
 
         // Stop timers if they have been started
         if (this._lastSavedTimer) {
-            console.log(`===C: ending lastSaved`);
+            console.log(`===E: ending lastSaved`);
             this._lastSavedTimer.end();
         }
 
         if (this._lastOpenedTimer) {
-            console.log(`===C: ending lastOpened`);
+            console.log(`===E: ending lastOpened`);
             this._lastOpenedTimer.end();
         }
 
@@ -2101,7 +2101,7 @@ export default class MainController implements vscode.Disposable {
             this._lastSavedTimer.getDuration() <
                 Constants.untitledSaveTimeThreshold
         ) {
-            console.log(`===C: saved untitled; transferring`);
+            console.log(`===D: saved untitled; transferring`);
             // Untitled file was saved and connection will be transfered
             await this._connectionMgr.transferFileConnection(
                 closedDocumentUri,
@@ -2114,14 +2114,14 @@ export default class MainController implements vscode.Disposable {
             this._lastOpenedTimer.getDuration() <
                 Constants.renamedOpenTimeThreshold
         ) {
-            console.log(`===C: renamed; transferring`);
+            console.log(`===D: renamed; transferring`);
             // File was renamed and connection will be transfered
             await this._connectionMgr.transferFileConnection(
                 closedDocumentUri,
                 this._lastOpenedUri,
             );
         } else {
-            console.log(`===C: close normally`);
+            console.log(`===D: close normally`);
             // Pass along the close event to the other handlers for a normal closed file
             await this._connectionMgr.onDidCloseTextDocument(doc);
             this._outputContentProvider.onDidCloseTextDocument(doc);
