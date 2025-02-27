@@ -2086,11 +2086,11 @@ export default class MainController implements vscode.Disposable {
         console.log(`_lastSavedUri: ${this._lastSavedUri}`);
         console.log(`closedDocumentUriScheme: ${closedDocumentUriScheme}`);
         console.log(
-            `_lastSavedTimer.getDuration(): ${this._lastSavedTimer.getDuration()}`,
+            `_lastSavedTimer.getDuration(): ${this._lastSavedTimer?.getDuration()}`,
         );
         console.log(`_lastOpenedUri: ${this._lastSavedUri}`);
         console.log(
-            `_lastOpenedTimer.getDuration(): ${this._lastOpenedTimer.getDuration()}`,
+            `_lastOpenedTimer.getDuration(): ${this._lastOpenedTimer?.getDuration()}`,
         );
 
         // If there was a saveTextDoc event just before this closeTextDoc event and it
