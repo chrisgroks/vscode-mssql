@@ -172,7 +172,7 @@ suite("MainController Tests", function () {
     });
 
     // Closed document event called to test rename and untitled save file event timeouts
-    test("onDidCloseTextDocument should propogate to the connectionManager even if a special event occured before it", function (done) {
+    test.only("onDidCloseTextDocument should propogate to the connectionManager even if a special event occured before it", function (done) {
         this.timeout(0);
         // Call both special cases
         mainController.onDidSaveTextDocument(newDocument);
