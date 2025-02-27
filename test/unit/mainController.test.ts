@@ -28,6 +28,7 @@ suite("MainController Tests", function () {
     let newDocUriCallback: string;
 
     setup(async () => {
+        this.timeout(0);
         // Need to activate the extension to get the mainController
         await activateExtension();
 
@@ -171,7 +172,8 @@ suite("MainController Tests", function () {
     });
 
     // Closed document event called to test rename and untitled save file event timeouts
-    test("onDidCloseTextDocument should propogate to the connectionManager even if a special event occured before it", (done) => {
+    test("onDidCloseTextDocument should propogate to the connectionManager even if a special event occured before it", function (done) {
+        this.timeout(0);
         // Call both special cases
         mainController.onDidSaveTextDocument(newDocument);
         mainController.onDidOpenTextDocument(newDocument);

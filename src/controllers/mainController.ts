@@ -2052,12 +2052,18 @@ export default class MainController implements vscode.Disposable {
     public async onDidCloseTextDocument(
         doc: vscode.TextDocument,
     ): Promise<void> {
+        console.log(`===A Test debug info:`);
+        console.log(`_connectionMgr: ${this._connectionMgr}`);
+        console.log(`doc: ${doc}`);
+        console.log(`doc.uri: ${doc.uri} | ${doc.uri.toString(true)}`);
+
         if (
             this._connectionMgr === undefined ||
             doc === undefined ||
             doc.uri === undefined
         ) {
             // Avoid processing events before initialization is complete
+            console.log(`===C: returning early`);
             return;
         }
         let closedDocumentUri: string = doc.uri.toString(true);
@@ -2065,14 +2071,27 @@ export default class MainController implements vscode.Disposable {
 
         // Stop timers if they have been started
         if (this._lastSavedTimer) {
+            console.log(`===C: ending lastSaved`);
             this._lastSavedTimer.end();
         }
 
         if (this._lastOpenedTimer) {
+            console.log(`===C: ending lastOpened`);
             this._lastOpenedTimer.end();
         }
 
         // Determine which event caused this close event
+
+        console.log(`===B Test debug info:`);
+        console.log(`_lastSavedUri: ${this._lastSavedUri}`);
+        console.log(`closedDocumentUriScheme: ${closedDocumentUriScheme}`);
+        console.log(
+            `_lastSavedTimer.getDuration(): ${this._lastSavedTimer.getDuration()}`,
+        );
+        console.log(`_lastOpenedUri: ${this._lastSavedUri}`);
+        console.log(
+            `_lastOpenedTimer.getDuration(): ${this._lastOpenedTimer.getDuration()}`,
+        );
 
         // If there was a saveTextDoc event just before this closeTextDoc event and it
         // was untitled then we know it was an untitled save
@@ -2082,6 +2101,7 @@ export default class MainController implements vscode.Disposable {
             this._lastSavedTimer.getDuration() <
                 Constants.untitledSaveTimeThreshold
         ) {
+            console.log(`===C: saved untitled; transferring`);
             // Untitled file was saved and connection will be transfered
             await this._connectionMgr.transferFileConnection(
                 closedDocumentUri,
@@ -2094,12 +2114,14 @@ export default class MainController implements vscode.Disposable {
             this._lastOpenedTimer.getDuration() <
                 Constants.renamedOpenTimeThreshold
         ) {
+            console.log(`===C: renamed; transferring`);
             // File was renamed and connection will be transfered
             await this._connectionMgr.transferFileConnection(
                 closedDocumentUri,
                 this._lastOpenedUri,
             );
         } else {
+            console.log(`===C: close normally`);
             // Pass along the close event to the other handlers for a normal closed file
             await this._connectionMgr.onDidCloseTextDocument(doc);
             this._outputContentProvider.onDidCloseTextDocument(doc);
@@ -2113,7 +2135,7 @@ export default class MainController implements vscode.Disposable {
             )
         ) {
             this._queryResultWebviewController.actualPlanStatuses.filter(
-                (uri) => uri != closedDocumentUri,
+                (uri) => uri !== closedDocumentUri,
             );
             vscode.commands.executeCommand(
                 "setContext",
