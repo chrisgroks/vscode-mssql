@@ -180,6 +180,7 @@ suite("MainController Tests", function () {
 
         // Cause event time out (above 10 ms should work)
         setTimeout(() => {
+            console.log(`===0: Triggering onDidCloseTextDocument`);
             void mainController.onDidCloseTextDocument(document);
 
             try {
