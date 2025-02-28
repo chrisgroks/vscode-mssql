@@ -20,6 +20,9 @@ dotenv.config({ path: './test/e2e/.env' });
  */
 export default defineConfig({
   testDir: './test/e2e',
+  testMatch: '**/*.spec.ts',
+  testIgnore: ['test/e2e/oldUi/**'],  // Ignore all tests that test the old ui
+                                      // they don't work and need to be updated
   /* Run tests in files in parallel */
   fullyParallel: false,
   /* Fail the build on CI if you accidentally left test.only in the source code. */

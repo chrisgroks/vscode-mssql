@@ -3,23 +3,10 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ElectronApplication, Page, test } from "@playwright/test";
+import { ElectronApplication, Page } from "@playwright/test";
+import { expect, test } from "./baseFixtures";
 import { launchVsCodeWithMssqlExtension } from "./utils/launchVscodeWithMsSqlExt";
 import { screenshotOnFailure } from "./utils/screenshotOnError";
-import {
-    getServerName,
-    getDatabaseName,
-    getAuthenticationType,
-    getUserName,
-    getPassword,
-    getSavePassword,
-    getProfileName,
-} from "./utils/envConfigReader";
-import {
-    addDatabaseConnection,
-    enterTextIntoQueryEditor,
-    openNewQueryEditor,
-} from "./utils/testHelpers";
 
 test.describe("MSSQL Extension - Query Plan", async () => {
     let vsCodeApp: ElectronApplication;
@@ -29,34 +16,30 @@ test.describe("MSSQL Extension - Query Plan", async () => {
         const { electronApp, page } = await launchVsCodeWithMssqlExtension();
         vsCodeApp = electronApp;
         vsCodePage = page;
-        const serverName = getServerName();
-        const databaseName = getDatabaseName();
-        const authType = getAuthenticationType();
-        const userName = getUserName();
-        const password = getPassword();
-        const savePassword = getSavePassword();
-        const profileName = getProfileName();
-        await addDatabaseConnection(
-            vsCodePage,
-            serverName,
-            databaseName,
-            authType,
-            userName,
-            password,
-            savePassword,
-            profileName,
-        );
-
-        await openNewQueryEditor(vsCodePage, profileName, password);
-        await enterTextIntoQueryEditor(vsCodePage, `select * from sys.objects`);
     });
 
-    test("Run execution plan", async () => {
-        const executionPlanButton = vsCodePage.locator(
-            'a[aria-label="Estimated Plan (Preview)"]',
+    test("Query Plan should be open", async () => {
+        // Open fileusing VS Code's command palette
+        await new Promise((resolve) => setTimeout(resolve, 1 * 1000));
+        await vsCodePage.keyboard.press("Control+P");
+        await vsCodePage.keyboard.type(
+            process.cwd() + "\\test\\resources\\plan.sqlplan",
         );
-        await executionPlanButton.waitFor({ state: "visible" });
-        await executionPlanButton.click();
+        await vsCodePage.keyboard.press("Enter");
+        await new Promise((resolve) => setTimeout(resolve, 1 * 1000));
+
+        const executionPlanLoadingText = vsCodePage.getByText(
+            "Loading execution plan...",
+        );
+        const queryCostText = vsCodePage.getByText(
+            "Query Cost (relative to the script)",
+        );
+
+        // Wait for "Loading execution plan..." to appear first
+        await expect(executionPlanLoadingText).toBeVisible();
+
+        // Wait for "Query Cost (relative to the script)" to appear (meaning loading is done)
+        await expect(queryCostText).toBeVisible();
     });
 
     test.afterEach(async ({}, testInfo) => {

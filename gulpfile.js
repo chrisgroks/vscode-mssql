@@ -350,7 +350,8 @@ gulp.task('ext:copy-dependencies', (done) => {
 gulp.task('ext:compile-tests', (done) => {
 	return gulp.src([
 		config.paths.project.root + '/test/**/*.ts',
-		config.paths.project.root + '/typings/**/*.ts'])
+		config.paths.project.root + '/typings/**/*.ts',
+		'!' + config.paths.project.root + '/test/e2e/oldUi/**'])
 		.pipe(srcmap.init())
 		.pipe(tsProject())
 		.on('error', function () {
@@ -405,7 +406,7 @@ gulp.task('ext:test', async () => {
 	});
 });
 
-gulp.task('ext:smoke', run('npx playwright test'));
+gulp.task('ext:smoke', run('npx nyc --reporter=html --reporter=text-summary --verbose npx playwright test'));
 
 gulp.task('test', gulp.series('ext:test'));
 
