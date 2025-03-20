@@ -3,6 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import * as shallowEqual from "shallowequal";
 import * as Constants from "../constants/constants";
 import * as LocalizedConstants from "../constants/locConstants";
 import * as Utils from "../models/utils";
@@ -13,6 +14,7 @@ import { Deferred } from "../protocol";
 import { ConnectionProfile } from "../models/connectionProfile";
 import { Logger } from "../models/logger";
 import { getConnectionDisplayName } from "../models/connectionInfo";
+import { concatUnique } from "../utils/utils";
 
 /**
  * Implements connection profile file storage.
@@ -246,8 +248,12 @@ export class ConnectionConfig implements IConnectionConfig {
             return configValue.globalValue || [];
         } else {
             // otherwise, return the combination of the workspace and workspace folder values
-            return (configValue.workspaceValue || []).concat(
+            // when VS code is opened to a folder instead of an explicit workspace,
+            // workspaceFolderValue may contain the same value as workspaceValue, so we need to dedupe
+            return concatUnique(
+                configValue.workspaceValue || [],
                 configValue.workspaceFolderValue || [],
+                shallowEqual,
             );
         }
     }
