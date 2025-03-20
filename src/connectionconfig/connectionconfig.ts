@@ -23,7 +23,7 @@ export class ConnectionConfig implements IConnectionConfig {
     private logger: Logger;
 
     initialized: Deferred<void> = new Deferred<void>();
-    RootGroupName: string = "ROOT";
+    static readonly RootGroupName: string = "ROOT";
 
     /**
      * Constructor.
@@ -43,7 +43,9 @@ export class ConnectionConfig implements IConnectionConfig {
 
     private getRootGroup(): IConnectionGroup | undefined {
         const groups: IConnectionGroup[] = this.getGroupsFromSettings();
-        return groups.find((group) => group.name === this.RootGroupName);
+        return groups.find(
+            (group) => group.name === ConnectionConfig.RootGroupName,
+        );
     }
 
     private async assignMissingIds(): Promise<void> {
@@ -57,7 +59,7 @@ export class ConnectionConfig implements IConnectionConfig {
 
         if (!rootGroup) {
             rootGroup = {
-                name: this.RootGroupName,
+                name: ConnectionConfig.RootGroupName,
                 id: Utils.generateGuid(),
             };
 
