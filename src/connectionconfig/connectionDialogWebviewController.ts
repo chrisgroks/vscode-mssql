@@ -72,6 +72,7 @@ import {
     groupAdvancedOptions,
 } from "./formComponentHelpers";
 import { FormWebviewController } from "../forms/formWebviewController";
+import { ConnectionCredentials } from "../models/connectionCredentials";
 
 export class ConnectionDialogWebviewController extends FormWebviewController<
     IConnectionDialogProfile,
@@ -619,8 +620,9 @@ export class ConnectionDialogWebviewController extends FormWebviewController<
         this.state.connectionStatus = ApiStatus.Loading;
         this.updateState();
 
-        const cleanedConnection: IConnectionDialogProfile =
-            this.cleanConnection(this.state.connectionProfile);
+        let cleanedConnection: IConnectionDialogProfile = this.cleanConnection(
+            this.state.connectionProfile,
+        );
 
         const erroredInputs = await this.validateProfile(cleanedConnection);
 
@@ -634,6 +636,16 @@ export class ConnectionDialogWebviewController extends FormWebviewController<
 
         try {
             try {
+                if (cleanedConnection.connectionString) {
+                    const connDetails =
+                        await this._mainController.connectionManager.buildConnectionInfo(
+                            cleanedConnection.connectionString,
+                        );
+
+                    cleanedConnection =
+                        ConnectionCredentials.createConnectionInfo(connDetails);
+                }
+
                 const result =
                     await this._mainController.connectionManager.connectionUI.validateAndSaveProfileFromDialog(
                         cleanedConnection as IConnectionProfile,

@@ -216,7 +216,20 @@ export class ListDatabasesResult {
 
 // ------------------------------- </ List Databases Request > --------------------------------------
 
-// ------------------------------- < Connection String Request > ---------------------------------------
+// ------------------------------- < Build Connection Info Request > -----------------------------------
+
+/**
+ * Build Connection Info request callback declaration
+ */
+export namespace BuildConnectionInfoRequest {
+    export const type = new RequestType<string, ConnectionDetails, void, void>(
+        "connection/buildconnectioninfo",
+    );
+}
+
+// ------------------------------- </ Build Connection Info Request > -----------------------------------
+
+// ------------------------------- < Get Connection String Request > ---------------------------------------
 /**
  * Get Connection String request callback declaration
  */

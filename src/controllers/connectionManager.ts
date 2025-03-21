@@ -379,6 +379,15 @@ export default class ConnectionManager {
         );
     }
 
+    public async buildConnectionInfo(
+        connectionString: string,
+    ): Promise<ConnectionDetails> {
+        return this.client.sendRequest(
+            ConnectionContracts.BuildConnectionInfoRequest.type,
+            connectionString,
+        );
+    }
+
     /**
      * Set connection details for the provided connection info
      * Able to use this for getConnectionString requests to STS that require ConnectionDetails type

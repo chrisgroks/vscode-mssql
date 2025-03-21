@@ -59,7 +59,7 @@ export class ConnectionCredentials implements IConnectionInfo {
     public connectionString: string | undefined;
 
     /**
-     * Create a connection details contract from connection credentials.
+     * Create a ConnectionDetails contract from an IConnectionInfo.
      */
     public static createConnectionDetails(
         credentials: IConnectionInfo,
@@ -118,6 +118,61 @@ export class ConnectionCredentials implements IConnectionInfo {
         details.options["typeSystemVersion"] = credentials.typeSystemVersion;
 
         return details;
+    }
+
+    /**
+     * Create an IConnectionInfo object from a ConnectionDetails contract.
+     */
+    public static createConnectionInfo(
+        details: ConnectionDetails,
+    ): IConnectionInfo {
+        const options = details.options || {};
+
+        const credentials: IConnectionInfo = {
+            connectionString: options["connectionString"],
+            server: options["server"],
+            port: options["server"]?.includes(",")
+                ? parseInt(options["server"].split(",")[1], 10)
+                : undefined,
+            database: options["database"],
+            user: options["user"],
+            password: options["password"],
+            authenticationType: options["authenticationType"],
+            azureAccountToken: options["azureAccountToken"],
+            encrypt: options["encrypt"],
+            trustServerCertificate: options["trustServerCertificate"],
+            hostNameInCertificate: options["hostNameInCertificate"],
+            persistSecurityInfo: options["persistSecurityInfo"],
+            secureEnclaves: options["secureEnclaves"],
+            columnEncryptionSetting: options["columnEncryptionSetting"],
+            attestationProtocol: options["attestationProtocol"],
+            enclaveAttestationUrl: options["enclaveAttestationUrl"],
+            connectTimeout: options["connectTimeout"],
+            commandTimeout: options["commandTimeout"],
+            connectRetryCount: options["connectRetryCount"],
+            connectRetryInterval: options["connectRetryInterval"],
+            applicationName: options["applicationName"],
+            workstationId: options["workstationId"],
+            applicationIntent: options["applicationIntent"],
+            currentLanguage: options["currentLanguage"],
+            pooling: options["pooling"],
+            maxPoolSize: options["maxPoolSize"],
+            minPoolSize: options["minPoolSize"],
+            loadBalanceTimeout: options["loadBalanceTimeout"],
+            replication: options["replication"],
+            attachDbFilename: options["attachDbFilename"],
+            failoverPartner: options["failoverPartner"],
+            multiSubnetFailover: options["multiSubnetFailover"],
+            multipleActiveResultSets: options["multipleActiveResultSets"],
+            packetSize: options["packetSize"],
+            typeSystemVersion: options["typeSystemVersion"],
+            email: undefined, // Not present in ConnectionDetails, set to undefined
+            accountId: undefined, // Not present in ConnectionDetails, set to undefined
+            tenantId: undefined, // Not present in ConnectionDetails, set to undefined
+            expiresOn: undefined, // Not present in ConnectionDetails, set to undefined
+        };
+
+        return credentials;
     }
 
     public static async ensureRequiredPropertiesSet(
