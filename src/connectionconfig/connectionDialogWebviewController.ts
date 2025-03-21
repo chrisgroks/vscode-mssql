@@ -636,8 +636,7 @@ export class ConnectionDialogWebviewController extends FormWebviewController<
             try {
                 const result =
                     await this._mainController.connectionManager.connectionUI.validateAndSaveProfileFromDialog(
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        cleanedConnection as any,
+                        cleanedConnection as IConnectionProfile,
                     );
 
                 if (result.errorMessage) {

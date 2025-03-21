@@ -646,6 +646,17 @@ export class ConnectionUI {
     public async validateAndSaveProfileFromDialog(
         profile: IConnectionProfile,
     ): Promise<ConnectionCompleteParams> {
+        let uri = this.vscodeWrapper.activeTextEditorUri;
+        if (!uri || !this.vscodeWrapper.isEditingSqlFile) {
+            uri = ObjectExplorerUtils.getNodeUriFromProfile(profile);
+        }
+
+        const success = await this.connectionManager.connect(uri, profile);
+
+        if (success) {
+            // Success! save it
+            await this.saveProfile(profile);
+        }
         const result = await this.connectionManager.connectDialog(profile);
         return result;
     }
