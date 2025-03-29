@@ -169,10 +169,12 @@ const SchemaDesignerStateProvider: React.FC<SchemaDesignerProviderProps> = ({ ch
             reactFlow.addEdges(edgesForNewTable);
             requestAnimationFrame(async () => {
                 await reactFlow.setCenter(
-                    nodeWithPosition.position.x,
-                    nodeWithPosition.position.y,
+                    nodeWithPosition.position.x + flowUtils.getTableWidth() / 2,
+                    nodeWithPosition.position.y +
+                        flowUtils.getTableHeight(nodeWithPosition.data) / 2,
                     {
                         duration: 500,
+                        zoom: reactFlow.getZoom(),
                     },
                 );
             });
