@@ -300,6 +300,7 @@ export function FloatingSearchWidget<T extends SearchableItem>({
                         filteredItems.length === 0 && searchText
                             ? "var(--vscode-errorForeground)"
                             : "",
+                    minWidth: "70px",
                 }}
                 id="search-results-count"
                 aria-live="polite">
