@@ -346,12 +346,24 @@ export const foreignKeyUtils = {
                 ),
             };
 
-        const uniqueCols = new Set(fk.columns);
-        if (uniqueCols.size !== fk.columns.length) {
-            return {
-                isValid: false,
-                errorMessage: locConstants.schemaDesigner.duplicateForeignKeyColumns,
-            };
+        const existingFks = table.foreignKeys.filter((f) => f.id !== fk.id);
+
+        const columnsSet = new Set();
+
+        for (const fks of existingFks) {
+            for (const col of fks.columns) {
+                columnsSet.add(col);
+            }
+        }
+
+        for (const cols of fk.columns) {
+            if (columnsSet.has(cols)) {
+                return {
+                    isValid: false,
+                    errorMessage: locConstants.schemaDesigner.duplicateForeignKeyColumns(cols),
+                };
+            }
+            columnsSet.add(cols);
         }
 
         for (let i = 0; i < fk.columns.length; i++) {
