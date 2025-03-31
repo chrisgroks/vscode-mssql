@@ -121,6 +121,7 @@ export const SchemaDesignerEditorDrawer = () => {
         if (success) {
             setIsEditDrawerOpen(false);
             eventBus.emit("getScript"); // Update the SQL script
+            eventBus.emit("pushState"); // Update the history state
         }
     };
 

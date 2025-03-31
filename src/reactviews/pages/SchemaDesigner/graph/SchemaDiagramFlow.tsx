@@ -136,6 +136,7 @@ export const SchemaDesignerFlow = () => {
 
         // Update create script
         eventBus.emit("getScript");
+        eventBus.emit("pushState");
     };
 
     /**
@@ -220,6 +221,11 @@ export const SchemaDesignerFlow = () => {
                 connectionMode={ConnectionMode.Loose}
                 onDelete={() => {
                     eventBus.emit("getScript");
+                    eventBus.emit("pushState");
+                }}
+                onNodeDragStop={() => {
+                    console.log("drag end");
+                    eventBus.emit("pushState");
                 }}
                 fitView>
                 <Controls />

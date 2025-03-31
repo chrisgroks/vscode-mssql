@@ -3,15 +3,16 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { createContext, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 import { SchemaDesigner } from "../../../sharedInterfaces/schemaDesigner";
 import { useVscodeWebview, WebviewContextProps } from "../../common/vscodeWebviewProvider";
 import { getCoreRPCs } from "../../common/utils";
 import { WebviewRpc } from "../../common/rpc";
 
-import { Edge, Node, useReactFlow } from "@xyflow/react";
+import { Edge, Node, ReactFlowJsonObject, useReactFlow } from "@xyflow/react";
 import { flowUtils, foreignKeyUtils } from "./schemaDesignerUtils";
 import eventBus from "./schemaDesignerEvents";
+import { UndoRedoStack } from "../../common/undoRedoStack";
 
 export interface SchemaDesignerContextProps
     extends WebviewContextProps<SchemaDesigner.SchemaDesignerWebviewState> {
@@ -47,6 +48,10 @@ interface SchemaDesignerProviderProps {
     children: React.ReactNode;
 }
 
+export const stateStack = new UndoRedoStack<
+    ReactFlowJsonObject<Node<SchemaDesigner.Table>, Edge<SchemaDesigner.ForeignKey>>
+>();
+
 const SchemaDesignerStateProvider: React.FC<SchemaDesignerProviderProps> = ({ children }) => {
     // Set up necessary webview context
     const webviewContext = useVscodeWebview<
@@ -58,6 +63,56 @@ const SchemaDesignerStateProvider: React.FC<SchemaDesignerProviderProps> = ({ ch
     // Setups for schema designer model
     const [datatypes, setDatatypes] = useState<string[]>([]);
     const [schemaNames, setSchemaNames] = useState<string[]>([]);
+    const reactFlow = useReactFlow();
+
+    useEffect(() => {
+        const handleScript = () => {
+            setTimeout(() => {
+                const state = reactFlow.toObject() as ReactFlowJsonObject<
+                    Node<SchemaDesigner.Table>,
+                    Edge<SchemaDesigner.ForeignKey>
+                >;
+                stateStack.pushState(state);
+                eventBus.emit("updateUndoRedoState", stateStack.canUndo(), stateStack.canRedo());
+            }, 100);
+        };
+        eventBus.on("pushState", handleScript);
+
+        const handleUndo = () => {
+            if (!stateStack.canUndo()) {
+                return;
+            }
+            const state = stateStack.undo();
+            if (!state) {
+                return;
+            }
+            reactFlow.setNodes(state.nodes);
+            reactFlow.setEdges(state.edges);
+            eventBus.emit("updateUndoRedoState", stateStack.canUndo(), stateStack.canRedo());
+        };
+
+        eventBus.on("undo", handleUndo);
+
+        const handleRedo = () => {
+            if (!stateStack.canRedo()) {
+                return;
+            }
+            const state = stateStack.redo();
+            if (!state) {
+                return;
+            }
+            reactFlow.setNodes(state.nodes);
+            reactFlow.setEdges(state.edges);
+            eventBus.emit("updateUndoRedoState", stateStack.canUndo(), stateStack.canRedo());
+        };
+        eventBus.on("redo", handleRedo);
+
+        return () => {
+            eventBus.off("pushState", handleScript);
+            eventBus.off("undo", handleUndo);
+            eventBus.off("redo", handleRedo);
+        };
+    }, []);
 
     const initializeSchemaDesigner = async () => {
         const model = (await extensionRpc.call(
@@ -69,13 +124,20 @@ const SchemaDesignerStateProvider: React.FC<SchemaDesignerProviderProps> = ({ ch
         setDatatypes(model.dataTypes);
         setSchemaNames(model.schemaNames);
 
+        setTimeout(() => {
+            stateStack.setInitialState(
+                reactFlow.toObject() as ReactFlowJsonObject<
+                    Node<SchemaDesigner.Table>,
+                    Edge<SchemaDesigner.ForeignKey>
+                >,
+            );
+        });
+
         return {
             nodes,
             edges,
         };
     };
-
-    const reactFlow = useReactFlow();
 
     // Get the script from the server
     const getScript = async () => {
