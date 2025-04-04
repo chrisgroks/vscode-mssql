@@ -63,6 +63,7 @@ export const DesignerDropdown = ({
             size="small"
             orientation={horizontal ? "horizontal" : "vertical"}>
             <SearchableDropdown
+                id={context.getComponentId(componentPath) ?? ""}
                 style={{
                     width: width,
                     minWidth: width,

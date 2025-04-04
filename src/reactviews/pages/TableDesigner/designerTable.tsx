@@ -122,9 +122,9 @@ export const DesignerTable = ({
                 return;
             }
             result[column] = {
-                minWidth: colProps?.componentProperties.width ?? 70,
-                idealWidth: colProps?.componentProperties.width ?? 70,
-                defaultWidth: colProps?.componentProperties.width ?? 70,
+                minWidth: colProps?.componentProperties.width ?? 60,
+                idealWidth: colProps?.componentProperties.width ?? 60,
+                defaultWidth: colProps?.componentProperties.width ?? 60,
             };
         });
         result["dragHandle"] = {
@@ -177,7 +177,7 @@ export const DesignerTable = ({
             to,
             columns[1].columnId,
         ]);
-        const element = context.elementRefs.current[firstCellElementId];
+        const element = document.getElementById(firstCellElementId);
         element?.focus();
     };
 

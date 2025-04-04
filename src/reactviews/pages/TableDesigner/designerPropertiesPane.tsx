@@ -13,7 +13,7 @@ import {
     makeStyles,
     shorthands,
 } from "@fluentui/react-components";
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { TableDesignerContext } from "./tableDesignerStateProvider";
 import { DesignerCheckbox } from "./designerCheckbox";
 import { DesignerInputBox } from "./designerInputBox";
@@ -69,6 +69,7 @@ const useStyles = makeStyles({
 export const DesignerPropertiesPane = () => {
     const classes = useStyles();
     const context = useContext(TableDesignerContext);
+    const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
     if (!context) {
         return null;
     }
@@ -91,6 +92,13 @@ export const DesignerPropertiesPane = () => {
     if (!data) {
         return undefined;
     }
+
+    useEffect(() => {
+        const newExpandedGroups = getExpandedGroups();
+        if (newExpandedGroups.length > 0) {
+            setExpandedGroups(newExpandedGroups);
+        }
+    }, [context.state.propertiesPaneData]);
 
     const renderAccordionItem = (
         group: string | undefined,
@@ -233,19 +241,22 @@ export const DesignerPropertiesPane = () => {
             });
     };
 
-    const getExpandedGroups = () => {
+    const getExpandedGroups = (): string[] => {
         // If expanded groups are set, return them
         if (parentTableProperties.expandedGroups) {
             return parentTableProperties.expandedGroups;
         } else {
             // If expanded groups are not set, expand the first group
-            if (getAccordionGroups().length > 0) {
+            if (getAccordionGroups().length > 0 && groups[0]) {
                 return [groups[0]];
             }
             // If there are no groups, return empty array
             return [];
         }
     };
+
+    useContext;
+
     return (
         <div className={classes.root}>
             <div className={classes.title}>
@@ -302,7 +313,15 @@ export const DesignerPropertiesPane = () => {
                 />
             </div>
             <div className={classes.stack}>
-                <Accordion multiple collapsible defaultOpenItems={getExpandedGroups()}>
+                <Accordion
+                    multiple
+                    collapsible
+                    openItems={expandedGroups}
+                    onToggle={(_, data) => {
+                        if (data.openItems) {
+                            setExpandedGroups(data.openItems as string[]);
+                        }
+                    }}>
                     {data && getAccordionGroups()}
                 </Accordion>
             </div>

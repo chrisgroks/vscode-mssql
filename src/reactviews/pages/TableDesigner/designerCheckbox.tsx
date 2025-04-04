@@ -58,7 +58,7 @@ export const DesignerCheckbox = ({
                         : "400px",
             }}>
             <Checkbox
-                ref={(el) => context.addElementRef(componentPath, el, UiArea)}
+                id={context.getComponentId(componentPath) ?? ""}
                 checked={value}
                 onChange={async (_event, data) => {
                     if (model.enabled === false) {

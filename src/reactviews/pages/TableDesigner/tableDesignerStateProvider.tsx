@@ -7,7 +7,7 @@ import * as designer from "../../../sharedInterfaces/tableDesigner";
 import { getCoreRPCs } from "../../common/utils";
 
 import { useVscodeWebview, WebviewContextProps } from "../../common/vscodeWebviewProvider";
-import { ReactNode, createContext, useRef, useState } from "react";
+import { ReactNode, createContext, useState } from "react";
 
 export interface TableDesignerContextProps
     extends WebviewContextProps<designer.TableDesignerWebviewState> {
@@ -27,8 +27,6 @@ export interface TableDesignerContextProps
         currentWidth: number;
         setCurrentWidth: (width: number) => void;
     };
-    elementRefs: React.MutableRefObject<{ [key: string]: any | null }>;
-    addElementRef: (path: (string | number)[], ref: any, UiArea: designer.DesignerUIArea) => void;
 
     /**
      * Initialize the table designer for the specified table.
@@ -139,7 +137,6 @@ const TableDesignerStateProvider: React.FC<TableDesignerProviderProps> = ({ chil
     const [isPropertiesPaneFullScreen, setIsPropertiesPaneFullScreen] = useState<boolean>(false);
     const [originalWidth, setOriginalWidth] = useState<number>(450);
 
-    const elementRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
     const tableState = webviewState?.state;
 
     function getComponentId(componentPath: (string | number)[]): string {
@@ -241,22 +238,6 @@ const TableDesignerStateProvider: React.FC<TableDesignerProviderProps> = ({ chil
                     setIsMaximized: setIsPropertiesPaneFullScreen,
                     currentWidth: propertiesPaneWidth,
                     setCurrentWidth: setPropertiesPaneWidth,
-                },
-                elementRefs: elementRefs,
-                addElementRef: function (
-                    path: (string | number)[],
-                    ref: any,
-                    UiArea: designer.DesignerUIArea,
-                ): void {
-                    const key = getComponentId(path);
-                    /**
-                     * If the component is in the main view, we don't want to store the reference
-                     * of the component copy in the properties view.
-                     */
-                    if (UiArea === "PropertiesView" && elementRefs.current[key]) {
-                        return;
-                    }
-                    return (elementRefs.current[key] = ref);
                 },
             }}>
             {children}

@@ -72,7 +72,7 @@ export const DesignerInputBox = ({
             {!multiline ? (
                 <Input
                     aria-labelledby={dropdownId}
-                    ref={(el) => context.addElementRef(componentPath, el, UiArea)}
+                    id={context.getComponentId(componentPath) ?? ""}
                     value={value ?? ""}
                     onChange={(_event, newValue) => {
                         setValue(newValue.value ?? "");
@@ -95,7 +95,7 @@ export const DesignerInputBox = ({
             ) : (
                 <Textarea
                     aria-labelledby={dropdownId}
-                    ref={(el) => context.addElementRef(componentPath, el, UiArea)}
+                    id={context.getComponentId(componentPath) ?? ""}
                     value={value ?? ""}
                     onChange={(_event, newValue) => {
                         setValue(newValue.value ?? "");

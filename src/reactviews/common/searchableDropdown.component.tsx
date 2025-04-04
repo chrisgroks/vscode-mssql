@@ -315,6 +315,12 @@ export const SearchableDropdown = (props: SearchableDropdownProps) => {
                     aria-label={props.ariaLabel}
                     disabled={props.disabled}
                     className={isMenuOpen ? "dropdown-open" : ""}
+                    onFocus={(e) => {
+                        e.target.parentElement?.classList.add("focus-within");
+                    }}
+                    onBlur={(e) => {
+                        e.target.parentElement?.classList.remove("focus-within");
+                    }}
                     style={{
                         ...props.style,
                         justifyContent: "space-between",

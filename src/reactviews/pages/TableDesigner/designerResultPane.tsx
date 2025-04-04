@@ -108,12 +108,12 @@ export const DesignerResultPane = () => {
     const findElementToFocus = (
         propertyPath: (string | number)[],
         tableComponent: DesignerDataPropertyInfo,
-    ): HTMLElement | undefined => {
+    ): string | undefined => {
         const pathLength = propertyPath.length;
         // Handle direct component focus cases
         if (pathLength === 1 || pathLength === 3 || pathLength === 5) {
             // Direct focus on component in main tab area or properties pane
-            return context.elementRefs.current[context.getComponentId(propertyPath as any)];
+            return context.getComponentId(propertyPath as any);
         }
 
         // Handle table row focus cases
@@ -121,9 +121,7 @@ export const DesignerResultPane = () => {
             // Focus on first property of a table row
             const firstProperty = (tableComponent.componentProperties as TableProperties)
                 .itemProperties[0].propertyName;
-            return context.elementRefs.current[
-                context.getComponentId([...propertyPath, firstProperty] as any)
-            ];
+            return context.getComponentId([...propertyPath, firstProperty] as any);
         }
 
         // Handle nested table row focus cases
@@ -142,9 +140,7 @@ export const DesignerResultPane = () => {
                 subTableComponent.componentProperties as TableProperties
             ).itemProperties[0].propertyName;
 
-            return context.elementRefs.current[
-                context.getComponentId([...propertyPath, firstPropertyInSubTable] as any)
-            ];
+            return context.getComponentId([...propertyPath, firstPropertyInSubTable] as any);
         }
 
         return undefined;
@@ -169,7 +165,6 @@ export const DesignerResultPane = () => {
 
         // Switch to the tab containing the issue
         context.setTab(containingTab.id as any);
-        await setTimeout(() => {}, 1000); // Wait for the DOM to update
 
         if (propertyPath.length > 1) {
             // Find the table component that contains the issue
@@ -193,22 +188,18 @@ export const DesignerResultPane = () => {
                 model: tableModel,
             });
 
-            // Use requestAnimationFrame to ensure the DOM has updated before trying to focus
-            requestAnimationFrame(async () => {
-                const elementToFocus = findElementToFocus(propertyPath, tableComponent);
-                console.log(context.elementRefs.current);
-
-                if (elementToFocus) {
-                    // Scroll the element into view and focus it
-                    elementToFocus.scrollIntoView({
-                        behavior: "smooth",
-                        block: "center",
-                        inline: "center",
-                    });
-
-                    elementToFocus.focus();
-                }
-            });
+            // timeout for 100ms to allow the component to be rendered
+            await new Promise((resolve) => setTimeout(resolve, 100));
+            const elementToFocus = findElementToFocus(propertyPath, tableComponent);
+            if (elementToFocus) {
+                const element = document.getElementById(elementToFocus);
+                element?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center",
+                    inline: "center",
+                });
+                element?.focus();
+            }
         }
     };
 

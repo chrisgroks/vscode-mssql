@@ -50,7 +50,8 @@ select:focus,
 .fui-Input:focus-within,
 .fui-Dropdown:focus-within,
 .fui-Textarea:focus-within,
-button[role="combobox"].dropdown-open {
+button[role="combobox"].dropdown-open,
+button[role="combobox"]:focus {
     border: 1px solid var(--vscode-focusBorder) !important;
     border-radius: var(--borderRadiusSmall, 2px) !important;
 }
