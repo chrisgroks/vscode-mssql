@@ -4,10 +4,10 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as designer from "../../../sharedInterfaces/tableDesigner";
+import { WebviewContextProps } from "../../../sharedInterfaces/webview";
 import { getCoreRPCs } from "../../common/utils";
-
-import { useVscodeWebview, WebviewContextProps } from "../../common/vscodeWebviewProvider";
-import { ReactNode, createContext, useState } from "react";
+import { useVscodeWebview } from "../../common/vscodeWebviewProvider";
+import { ReactNode, createContext, useRef, useState } from "react";
 
 export interface TableDesignerContextProps
     extends WebviewContextProps<designer.TableDesignerWebviewState> {
