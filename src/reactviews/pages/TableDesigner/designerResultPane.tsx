@@ -14,6 +14,7 @@ import {
     WarningRegular,
 } from "@fluentui/react-icons";
 import {
+    DesignerDataPropertyInfo,
     DesignerIssue,
     DesignerResultPaneTabs,
     InputBoxProperties,
@@ -97,93 +98,117 @@ export const DesignerResultPane = () => {
         return undefined;
     }
 
-    const openAndFocusIssueComponet = async (issue: DesignerIssue) => {
-        const issuePath = issue.propertyPath ?? [];
-        context?.log(`focusing on ${issuePath}`);
+    /**
+     * Helper function to find the element to focus based on property path length
+     * @param propertyPath The path to the property
+     * @param tableComponent The table component if applicable
+     * @param context The context containing element references
+     * @returns The HTML element to focus, or undefined if not found
+     */
+    const findElementToFocus = (
+        propertyPath: (string | number)[],
+        tableComponent: DesignerDataPropertyInfo,
+    ): HTMLElement | undefined => {
+        const pathLength = propertyPath.length;
+        // Handle direct component focus cases
+        if (pathLength === 1 || pathLength === 3 || pathLength === 5) {
+            // Direct focus on component in main tab area or properties pane
+            return context.elementRefs.current[context.getComponentId(propertyPath as any)];
+        }
+
+        // Handle table row focus cases
+        if (pathLength === 2 && tableComponent) {
+            // Focus on first property of a table row
+            const firstProperty = (tableComponent.componentProperties as TableProperties)
+                .itemProperties[0].propertyName;
+            return context.elementRefs.current[
+                context.getComponentId([...propertyPath, firstProperty] as any)
+            ];
+        }
+
+        // Handle nested table row focus cases
+        if (pathLength === 4 && tableComponent) {
+            // Focus on first property of a row in a nested table
+            const subTableName = propertyPath[2];
+            const subTableComponent = (
+                tableComponent.componentProperties as TableProperties
+            ).itemProperties.find((prop) => prop.propertyName === subTableName);
+
+            if (!subTableComponent) {
+                return undefined;
+            }
+
+            const firstPropertyInSubTable = (
+                subTableComponent.componentProperties as TableProperties
+            ).itemProperties[0].propertyName;
+
+            return context.elementRefs.current[
+                context.getComponentId([...propertyPath, firstPropertyInSubTable] as any)
+            ];
+        }
+
+        return undefined;
+    };
+
+    const openAndFocusIssue = async (issue: DesignerIssue) => {
+        const propertyPath = issue.propertyPath ?? [];
 
         if (!state?.view?.tabs) {
             return;
         }
-        const containingTab = state.view.tabs.find((tab) => {
-            return tab.components.find((c) => {
-                return c.propertyName === issuePath[0];
-            });
-        });
+
+        // Find the tab containing the component at the first level of the property path
+        const targetPropertyName = propertyPath[0];
+        const containingTab = state.view.tabs.find((tab) =>
+            tab.components.some((component) => component.propertyName === targetPropertyName),
+        );
 
         if (!containingTab) {
             return;
-        } else {
-            context.setTab(containingTab.id as any);
-            await new Promise((resolve) => setTimeout(resolve, 100));
         }
-        let tableComponent;
-        let tableModel;
-        if (issuePath.length > 1) {
-            // error is found in a table row. Load properties for the row
-            tableComponent = containingTab.components.find((c) => c.propertyName === issuePath[0]);
+
+        // Switch to the tab containing the issue
+        context.setTab(containingTab.id as any);
+        await setTimeout(() => {}, 1000); // Wait for the DOM to update
+
+        if (propertyPath.length > 1) {
+            // Find the table component that contains the issue
+            let tableComponent = containingTab.components.find(
+                (component) => component.propertyName === targetPropertyName,
+            );
+
             if (!tableComponent) {
                 return;
             }
-            tableModel = state.model![tableComponent.propertyName];
+
+            let tableModel = state.model![tableComponent.propertyName];
             if (!tableModel) {
                 return;
             }
+
+            // Load properties for the row containing the issue
             context.setPropertiesComponents({
-                componentPath: [issuePath[0], issuePath[1]],
+                componentPath: [targetPropertyName, propertyPath[1]],
                 component: tableComponent,
                 model: tableModel,
             });
-        }
 
-        let elementToFocus: HTMLElement | undefined = undefined;
-        switch (issuePath.length) {
-            case 1: // This is a component in the main tab area. Therefore we can directly focus on the component
-            case 3: // This is a component in the properties pane. Since we have already loaded the properties pane, we can directly focus on the component
-            case 5: // This is a component in the table inside the properties pane. Since we have already loaded the properties pane, we can directly focus on the component
-                elementToFocus =
-                    context.elementRefs.current[context.getComponentId(issuePath as any)];
-                break;
-            case 2: // This is table row. Therefore focuing on the first property of the row
-                if (!tableComponent) {
-                    return;
-                }
-                const firstProperty = (tableComponent.componentProperties as TableProperties)
-                    .itemProperties[0].propertyName;
-                elementToFocus =
-                    context.elementRefs.current[
-                        context.getComponentId([...issuePath, firstProperty] as any)
-                    ];
-                break;
-            case 4: // This is table row in properties pane. Therefore focuing on the first property of the row
-                if (!tableComponent) {
-                    return;
-                }
-                const subTableName = issuePath[2];
-                const subTableComponent = (
-                    tableComponent.componentProperties as TableProperties
-                ).itemProperties.find((c) => c.propertyName === subTableName);
-                if (!subTableComponent) {
-                    return;
-                }
-                const firstPropertyInSubTable = (
-                    subTableComponent.componentProperties as TableProperties
-                ).itemProperties[0].propertyName;
-                elementToFocus =
-                    context.elementRefs.current[
-                        context.getComponentId([...issuePath, firstPropertyInSubTable] as any)
-                    ];
-                break;
-            default:
-                break;
-        }
+            // Use requestAnimationFrame to ensure the DOM has updated before trying to focus
+            requestAnimationFrame(async () => {
+                const elementToFocus = findElementToFocus(propertyPath, tableComponent);
+                console.log(context.elementRefs.current);
 
-        if (elementToFocus) {
-            elementToFocus.scrollIntoView({
-                behavior: "smooth",
-                block: "center",
-                inline: "center",
+                if (elementToFocus) {
+                    // Scroll the element into view and focus it
+                    elementToFocus.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                        inline: "center",
+                    });
+
+                    elementToFocus.focus();
+                }
             });
-            elementToFocus.focus();
         }
     };
 
@@ -277,7 +302,7 @@ export const DesignerResultPane = () => {
                                     return (
                                         <ListItem
                                             key={`issue-${index}`}
-                                            onAction={async () => openAndFocusIssueComponet(item)}>
+                                            onAction={async () => openAndFocusIssue(item)}>
                                             <div className={classes.issuesRows}>
                                                 {item.severity === "error" && (
                                                     <ErrorCircleRegular

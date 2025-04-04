@@ -7,13 +7,7 @@ import * as designer from "../../../sharedInterfaces/tableDesigner";
 import * as fluentui from "@fluentui/react-components";
 import * as l10n from "@vscode/l10n";
 
-import {
-    AddFilled,
-    ArrowSortDownFilled,
-    ArrowSortUpFilled,
-    DeleteRegular,
-    ReorderRegular,
-} from "@fluentui/react-icons";
+import * as FluentIcons from "@fluentui/react-icons";
 import { useContext, useState } from "react";
 
 import { DesignerCheckbox } from "./designerCheckbox";
@@ -59,6 +53,10 @@ export const DesignerTable = ({
     }
     const classes = useStyles();
 
+    const showAdvancedProperties = () => {
+        return tableProps.showItemDetailInPropertiesView !== false && loadPropertiesTabData;
+    };
+
     const MOVE_UP = l10n.t("Move Up");
     const MOVE_DOWN = l10n.t("Move Down");
 
@@ -93,6 +91,17 @@ export const DesignerTable = ({
         );
     }
 
+    if (showAdvancedProperties()) {
+        columnsDef.push(
+            fluentui.createTableColumn({
+                columnId: "itemDetail",
+                renderHeaderCell: () => {
+                    return <></>;
+                },
+            }),
+        );
+    }
+
     const items: designer.DesignerTableComponentDataItem[] =
         model.data?.map((row) => {
             return row;
@@ -118,20 +127,21 @@ export const DesignerTable = ({
                 defaultWidth: colProps?.componentProperties.width ?? 70,
             };
         });
-        if (tableProps.canMoveRows) {
-            result["dragHandle"] = {
-                minWidth: 15,
-                idealWidth: 15,
-                defaultWidth: 15,
-            };
-        }
-        if (tableProps.canRemoveRows) {
-            result["remove"] = {
-                minWidth: 35,
-                idealWidth: 35,
-                defaultWidth: 35,
-            };
-        }
+        result["dragHandle"] = {
+            minWidth: 15,
+            idealWidth: 15,
+            defaultWidth: 15,
+        };
+        result["remove"] = {
+            minWidth: 35,
+            idealWidth: 35,
+            defaultWidth: 35,
+        };
+        result["itemDetail"] = {
+            minWidth: 35,
+            idealWidth: 35,
+            defaultWidth: 35,
+        };
         return result;
     };
     const [columnSizingOptions] =
@@ -196,7 +206,7 @@ export const DesignerTable = ({
                             <fluentui.Button
                                 appearance="subtle"
                                 size="small"
-                                icon={<ReorderRegular />}
+                                icon={<FluentIcons.ReorderRegular />}
                                 draggable={true}
                                 onDragEnter={() => {
                                     setDraggedOverRowId(rowIndex);
@@ -226,7 +236,7 @@ export const DesignerTable = ({
                         disabled={row.item.canBeDeleted ? !row.item.canBeDeleted : false}
                         appearance="subtle"
                         size="small"
-                        icon={<DeleteRegular />}
+                        icon={<FluentIcons.DeleteRegular />}
                         onClick={async () => {
                             context.processTableEdit({
                                 path: [...componentPath, row.rowId],
@@ -236,6 +246,23 @@ export const DesignerTable = ({
                             });
                         }}
                         title={locConstants.tableDesigner.remove(tableProps.objectTypeDisplayName!)}
+                    />
+                );
+            case "itemDetail":
+                return (
+                    <fluentui.Button
+                        appearance="subtle"
+                        size="small"
+                        icon={<FluentIcons.MoreCircleRegular />}
+                        onClick={() => {
+                            context?.setPropertiesComponents({
+                                componentPath: [...componentPath, row.rowId],
+                                component: component,
+                                model: model,
+                            });
+                            setFocusedRowId(rowIndex);
+                        }}
+                        title={l10n.t("Open item detail")}
                     />
                 );
             default: {
@@ -294,7 +321,7 @@ export const DesignerTable = ({
                 {tableProps.canAddRows && (
                     <fluentui.Button
                         appearance="transparent"
-                        icon={<AddFilled className={classes.tableActionIcon} />}
+                        icon={<FluentIcons.AddFilled className={classes.tableActionIcon} />}
                         onClick={() => {
                             context.processTableEdit({
                                 path: [...componentPath, rows.length],
@@ -309,7 +336,7 @@ export const DesignerTable = ({
                 )}
                 {tableProps.canMoveRows && (
                     <fluentui.Button
-                        icon={<ArrowSortUpFilled className={classes.tableActionIcon} />}
+                        icon={<FluentIcons.ArrowSortUpFilled className={classes.tableActionIcon} />}
                         onClick={(event) => {
                             (event.target as HTMLElement).focus();
                             moveRows(focusedRowId!, focusedRowId! - 1);
@@ -322,7 +349,9 @@ export const DesignerTable = ({
                 )}
                 {tableProps.canMoveRows && (
                     <fluentui.Button
-                        icon={<ArrowSortDownFilled className={classes.tableActionIcon} />}
+                        icon={
+                            <FluentIcons.ArrowSortDownFilled className={classes.tableActionIcon} />
+                        }
                         onClick={(event) => {
                             (event.target as HTMLElement).focus();
                             moveRows(focusedRowId!, focusedRowId! + 1);
@@ -405,17 +434,6 @@ export const DesignerTable = ({
                                         marginTop: rowError ? "5px" : "",
                                     }}
                                     onFocus={(event) => {
-                                        if (
-                                            !loadPropertiesTabData ||
-                                            tableProps.showItemDetailInPropertiesView === false
-                                        ) {
-                                            return;
-                                        }
-                                        context?.setPropertiesComponents({
-                                            componentPath: [...componentPath, row.rowId],
-                                            component: component,
-                                            model: model,
-                                        });
                                         setFocusedRowId(index);
                                         event.preventDefault();
                                     }}
