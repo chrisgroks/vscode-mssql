@@ -132,6 +132,7 @@ export interface ConnectionDialogContextProps
     > {
     loadConnection: (connection: IConnectionDialogProfile) => void;
     setConnectionInputType: (inputType: ConnectionInputMode) => void;
+    testConnection: () => void;
     connect: () => void;
     loadAzureServers: (subscriptionId: string) => void;
     closeDialog: () => void;
@@ -159,6 +160,7 @@ export interface ConnectionDialogReducers extends FormReducers<IConnectionDialog
     loadConnection: {
         connection: IConnectionDialogProfile;
     };
+    testConnection: {};
     connect: {};
     loadAzureServers: {
         subscriptionId: string;

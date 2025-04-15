@@ -58,7 +58,9 @@ export const ConnectButton = ({
                 </MenuTrigger>
                 <MenuPopover>
                     <MenuList>
-                        <MenuItem>Test Connection</MenuItem>
+                        <MenuItem onClick={() => context.testConnection()}>
+                            Test Connection
+                        </MenuItem>
                     </MenuList>
                 </MenuPopover>
             </Menu>

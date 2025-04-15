@@ -45,6 +45,9 @@ const ConnectionDialogStateProvider: React.FC<ConnectionDialogProviderProps> = (
                         inputMode: inputMode,
                     });
                 },
+                testConnection: function (): void {
+                    webviewState?.extensionRpc.action("testConnection");
+                },
                 connect: function (): void {
                     webviewState?.extensionRpc.action("connect");
                 },

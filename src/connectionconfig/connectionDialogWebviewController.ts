@@ -21,6 +21,7 @@ import {
     IConnectionDialogProfile,
     TrustServerCertDialogProps,
     ConnectionDialogFormItemSpec,
+    IDialogProps,
 } from "../sharedInterfaces/connectionDialog";
 import { ConnectionCompleteParams } from "../models/contracts/connection";
 import { FormItemActionButton, FormItemOptions } from "../sharedInterfaces/form";
@@ -224,6 +225,10 @@ export class ConnectionDialogWebviewController extends FormWebviewController<
             await this.handleAzureMFAEdits("accountId");
 
             return state;
+        });
+
+        this.registerReducer("testConnection", async (state) => {
+            console.log("Testing connection...");
         });
 
         this.registerReducer("connect", async (state) => {
@@ -553,6 +558,34 @@ export class ConnectionDialogWebviewController extends FormWebviewController<
         return await this.validateForm(cleanedConnection);
     }
 
+    private async testConnectionHelper(
+        connection: IConnectionDialogProfile,
+        state: ConnectionDialogWebviewState,
+    ): Promise<ConnectionCompleteParams> {
+        if (state.selectedInputMode === ConnectionInputMode.ConnectionString) {
+            // convert connection string to an IConnectionProfile object
+            const connDetails = await this._mainController.connectionManager.buildConnectionDetails(
+                this.state.connectionProfile.connectionString,
+            );
+
+            connection = ConnectionCredentials.createConnectionInfo(connDetails);
+
+            // re-add profileName and savePassword because they aren't part of the connection string
+            connection.profileName = state.connectionProfile.profileName;
+            connection.savePassword = !!connection.password; // if the password is included in the connection string, saving it is implied
+
+            // overwrite SQL Tools Service's default application name with the one the user provided (or MSSQL's default)
+            connection.applicationName = this.state.connectionProfile.applicationName;
+        }
+
+        const result = await this._mainController.connectionManager.connectDialog(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            connection as any,
+        );
+
+        return result;
+    }
+
     private async connectHelper(
         state: ConnectionDialogWebviewState,
     ): Promise<ConnectionDialogWebviewState> {
@@ -568,34 +601,13 @@ export class ConnectionDialogWebviewController extends FormWebviewController<
 
         if (erroredInputs.length > 0) {
             this.state.connectionStatus = ApiStatus.Error;
-            console.warn("One more more inputs have errors: " + erroredInputs.join(", "));
+            this.logger.warn("One more more inputs have errors: " + erroredInputs.join(", "));
             return state;
         }
 
         try {
             try {
-                if (this.state.selectedInputMode === ConnectionInputMode.ConnectionString) {
-                    // convert connection string to an IConnectionProfile object
-                    const connDetails =
-                        await this._mainController.connectionManager.buildConnectionDetails(
-                            this.state.connectionProfile.connectionString,
-                        );
-
-                    cleanedConnection = ConnectionCredentials.createConnectionInfo(connDetails);
-
-                    // re-add profileName and savePassword because they aren't part of the connection string
-                    cleanedConnection.profileName = this.state.connectionProfile.profileName;
-                    cleanedConnection.savePassword = !!cleanedConnection.password; // if the password is included in the connection string, saving it is implied
-
-                    // overwrite SQL Tools Service's default application name with the one the user provided (or MSSQL's default)
-                    cleanedConnection.applicationName =
-                        this.state.connectionProfile.applicationName;
-                }
-
-                const result = await this._mainController.connectionManager.connectDialog(
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    cleanedConnection as any,
-                );
+                const result = await this.testConnectionHelper(cleanedConnection, state);
 
                 if (result.errorMessage) {
                     return await this.handleConnectionErrorCodes(result, state);
@@ -707,64 +719,70 @@ export class ConnectionDialogWebviewController extends FormWebviewController<
         return output;
     }
 
+    private async getDialogForConnectionError(
+        result: ConnectionCompleteParams,
+    ): Promise<IDialogProps> {
+        switch (result.errorNumber) {
+            case connectionCertValidationFailedErrorCode: {
+                return {
+                    type: "trustServerCert",
+                    message: result.errorMessage,
+                } as TrustServerCertDialogProps;
+            }
+            case connectionFirewallErrorCode: {
+                const handleFirewallErrorResult =
+                    await this._mainController.connectionManager.firewallService.handleFirewallRule(
+                        result.errorNumber,
+                        result.errorMessage,
+                    );
+
+                if (!handleFirewallErrorResult.result) {
+                    sendErrorEvent(
+                        TelemetryViews.ConnectionDialog,
+                        TelemetryActions.AddFirewallRule,
+                        new Error(result.errorMessage),
+                        true, // includeErrorMessage; parse failed because it couldn't detect an IP address, so that'd be the only PII
+                        undefined, // errorCode
+                        undefined, // errorType
+                    );
+
+                    // Proceed with 0.0.0.0 as the client IP, and let user fill it out manually.
+                    handleFirewallErrorResult.ipAddress = "0.0.0.0";
+                }
+
+                const auth = await confirmVscodeAzureSignin();
+                const tenants = await auth.getTenants();
+
+                return {
+                    type: "addFirewallRule",
+                    message: result.errorMessage,
+                    clientIp: handleFirewallErrorResult.ipAddress,
+                    tenants: tenants.map((t) => {
+                        return {
+                            name: t.displayName,
+                            id: t.tenantId,
+                        };
+                    }),
+                } as AddFirewallRuleDialogProps;
+            }
+            default:
+                return undefined;
+        }
+    }
+
     private async handleConnectionErrorCodes(
         result: ConnectionCompleteParams,
         state: ConnectionDialogWebviewState,
     ): Promise<ConnectionDialogWebviewState> {
-        if (result.errorNumber === connectionCertValidationFailedErrorCode) {
-            this.state.connectionStatus = ApiStatus.Error;
-            this.state.dialog = {
-                type: "trustServerCert",
-                message: result.errorMessage,
-            } as TrustServerCertDialogProps;
+        state.connectionStatus = ApiStatus.Error;
+        const dialog = await this.getDialogForConnectionError(result);
 
-            // connection failing because the user didn't trust the server cert is not an error worth logging;
-            // just prompt the user to trust the cert
-
-            return state;
-        } else if (result.errorNumber === connectionFirewallErrorCode) {
-            this.state.connectionStatus = ApiStatus.Error;
-
-            const handleFirewallErrorResult =
-                await this._mainController.connectionManager.firewallService.handleFirewallRule(
-                    result.errorNumber,
-                    result.errorMessage,
-                );
-
-            if (!handleFirewallErrorResult.result) {
-                sendErrorEvent(
-                    TelemetryViews.ConnectionDialog,
-                    TelemetryActions.AddFirewallRule,
-                    new Error(result.errorMessage),
-                    true, // includeErrorMessage; parse failed because it couldn't detect an IP address, so that'd be the only PII
-                    undefined, // errorCode
-                    undefined, // errorType
-                );
-
-                // Proceed with 0.0.0.0 as the client IP, and let user fill it out manually.
-                handleFirewallErrorResult.ipAddress = "0.0.0.0";
-            }
-
-            const auth = await confirmVscodeAzureSignin();
-            const tenants = await auth.getTenants();
-
-            this.state.dialog = {
-                type: "addFirewallRule",
-                message: result.errorMessage,
-                clientIp: handleFirewallErrorResult.ipAddress,
-                tenants: tenants.map((t) => {
-                    return {
-                        name: t.displayName,
-                        id: t.tenantId,
-                    };
-                }),
-            } as AddFirewallRuleDialogProps;
-
+        if (dialog !== undefined) {
+            state.dialog = dialog;
             return state;
         }
 
-        this.state.formError = result.errorMessage;
-        this.state.connectionStatus = ApiStatus.Error;
+        state.formError = result.errorMessage;
 
         sendActionEvent(TelemetryViews.ConnectionDialog, TelemetryActions.CreateConnection, {
             result: "connectionError",
