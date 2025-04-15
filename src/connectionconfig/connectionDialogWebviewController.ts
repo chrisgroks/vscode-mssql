@@ -229,6 +229,8 @@ export class ConnectionDialogWebviewController extends FormWebviewController<
 
         this.registerReducer("testConnection", async (state) => {
             console.log("Testing connection...");
+
+            return state;
         });
 
         this.registerReducer("connect", async (state) => {
