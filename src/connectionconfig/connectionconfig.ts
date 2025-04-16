@@ -296,14 +296,16 @@ export class ConnectionConfig implements IConnectionConfig {
                 vscode.ConfigurationTarget.Global,
             );
 
-        // Save the workspace profiles to settings
-        await vscode.workspace
-            .getConfiguration(Constants.extensionName)
-            .update(
-                Constants.connectionsArrayName,
-                workspaceProfiles,
-                vscode.ConfigurationTarget.Workspace,
-            );
+        if (vscode.workspace.workspaceFile) {
+            // Save the workspace profiles to settings
+            await vscode.workspace
+                .getConfiguration(Constants.extensionName)
+                .update(
+                    Constants.connectionsArrayName,
+                    workspaceProfiles,
+                    vscode.ConfigurationTarget.Workspace,
+                );
+        }
 
         // Save the workspace folder profiles to settings
         for (const [workspaceFolderUri, profiles] of workspaceFolderProfilesMap.entries()) {
