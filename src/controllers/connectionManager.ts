@@ -36,6 +36,7 @@ import { TelemetryActions, TelemetryViews } from "../sharedInterfaces/telemetry"
 import { ObjectExplorerUtils } from "../objectExplorer/objectExplorerUtils";
 import { changeLanguageServiceForFile } from "../languageservice/utils";
 import * as events from "events";
+import { Semaphore } from "../utils/semaphore";
 
 /**
  * Information for a document's connection. Exported for testing purposes.
@@ -106,6 +107,7 @@ export default class ConnectionManager {
     public azureController: AzureController;
 
     private _event: events.EventEmitter = new events.EventEmitter();
+    private _accountTokenRefreshSemaphore: Map<string, Semaphore> = new Map();
 
     constructor(
         context: vscode.ExtensionContext,
@@ -1133,31 +1135,44 @@ export default class ConnectionManager {
         profile.user = account.displayInfo.displayName;
         profile.email = account.displayInfo.email;
 
-        const azureAccountToken = await this.azureController.refreshAccessToken(
-            account,
-            this.accountStore,
-            profile.tenantId,
-            providerSettings.resources.databaseResource!,
-        );
+        // Keep track of the semaphore for this account to prevent multiple refreshes of the same account
+        const accountKey = account.key.id;
+        let semaphore = this._accountTokenRefreshSemaphore.get(accountKey);
+        if (!semaphore) {
+            semaphore = new Semaphore();
+            this._accountTokenRefreshSemaphore.set(accountKey, semaphore);
+        }
 
-        if (!azureAccountToken) {
-            let errorMessage = LocalizedConstants.msgAccountRefreshFailed;
-            let refreshResult = await this.vscodeWrapper.showErrorMessage(
-                errorMessage,
-                LocalizedConstants.refreshTokenLabel,
+        await semaphore.acquire();
+        try {
+            const azureAccountToken = await this.azureController.refreshAccessToken(
+                account,
+                this.accountStore,
+                profile.tenantId,
+                providerSettings.resources.databaseResource!,
             );
-            if (refreshResult === LocalizedConstants.refreshTokenLabel) {
-                await this.azureController.populateAccountProperties(
-                    profile,
-                    this.accountStore,
-                    providerSettings.resources.databaseResource!,
+
+            if (!azureAccountToken) {
+                let errorMessage = LocalizedConstants.msgAccountRefreshFailed;
+                let refreshResult = await this.vscodeWrapper.showErrorMessage(
+                    errorMessage,
+                    LocalizedConstants.refreshTokenLabel,
                 );
+                if (refreshResult === LocalizedConstants.refreshTokenLabel) {
+                    await this.azureController.populateAccountProperties(
+                        profile,
+                        this.accountStore,
+                        providerSettings.resources.databaseResource!,
+                    );
+                } else {
+                    throw new Error(LocalizedConstants.cannotConnect);
+                }
             } else {
-                throw new Error(LocalizedConstants.cannotConnect);
+                connectionInfo.azureAccountToken = azureAccountToken.token;
+                connectionInfo.expiresOn = azureAccountToken.expiresOn;
             }
-        } else {
-            connectionInfo.azureAccountToken = azureAccountToken.token;
-            connectionInfo.expiresOn = azureAccountToken.expiresOn;
+        } finally {
+            semaphore.release();
         }
     }
 
@@ -1172,11 +1187,14 @@ export default class ConnectionManager {
         fileUri: string,
         connectionCreds: IConnectionInfo,
         promise?: Deferred<boolean>,
+        connectionDisplayName?: string,
     ): Promise<boolean> {
         return await vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Notification,
-                title: LocalizedConstants.connectProgressNoticationTitle,
+                title: connectionDisplayName
+                    ? LocalizedConstants.connectingProfile(connectionDisplayName)
+                    : LocalizedConstants.connectProgressNoticationTitle,
                 cancellable: false,
             },
             async (_progress, _cancellationToken) => {

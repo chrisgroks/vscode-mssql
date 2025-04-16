@@ -61,6 +61,10 @@ export class ConnectionCredentials implements IConnectionInfo {
             options: {},
         };
 
+        if ((credentials as IConnectionProfile).id) {
+            details.options["id"] = (credentials as IConnectionProfile).id;
+        }
+
         details.options["connectionString"] = credentials.connectionString;
         details.options["server"] = credentials.server;
         if (credentials.port && details.options["server"].indexOf(",") === -1) {
