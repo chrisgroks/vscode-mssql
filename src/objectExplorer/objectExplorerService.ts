@@ -55,6 +55,7 @@ import {
 } from "../models/contracts/objectExplorer/getSessionIdRequest";
 import { Logger } from "../models/logger";
 import VscodeWrapper from "../controllers/vscodeWrapper";
+import { Semaphore } from "../utils/semaphore";
 
 function getParentNode(node: TreeNodeType): TreeNodeInfo {
     node = node.parentNode;
@@ -74,6 +75,7 @@ export class ObjectExplorerService {
     private _rootTreeNodeArray: Array<TreeNodeInfo>;
     private _sessionIdToConnectionProfileMap: Map<string, IConnectionProfile>;
     private _expandParamsToTreeNodeInfoMap: Map<ExpandParams, TreeNodeInfo>;
+    private _rootRefreshSemaphore: Semaphore;
 
     // Deferred promise maps
     private _sessionIdToPromiseMap: Map<string, Deferred<vscode.TreeItem>>;
@@ -154,13 +156,21 @@ export class ObjectExplorerService {
                     !this._connectionManager.isConnected(nodeUri) &&
                     !this._connectionManager.isConnecting(nodeUri)
                 ) {
+                    console.log("OE: Connecting to node: ", nodeUri);
                     const profile = <IConnectionProfile>node.connectionInfo;
-                    await this._connectionManager.connect(
+                    const connectionResult = await this._connectionManager.connect(
                         nodeUri,
                         profile,
                         undefined,
                         node?.label?.toString(),
                     );
+                    console.log("OE: Connected to node: ", nodeUri, result);
+                    if (!connectionResult) {
+                        const promise = self._sessionIdToPromiseMap.get(result.sessionId);
+                        if (promise) {
+                            return promise.resolve(undefined);
+                        }
+                    }
                 }
 
                 self.updateNode(node);
@@ -534,7 +544,6 @@ export class ObjectExplorerService {
 
         // Check if we have cached children
         if (this._treeNodeToChildrenMap.has(element)) {
-            console.log("returning cached children", element);
             return this._treeNodeToChildrenMap.get(element);
         }
 
@@ -544,42 +553,65 @@ export class ObjectExplorerService {
         }
 
         // Handle node with existing session
-        if (element.sessionId) {
-            return this.getChildrenWithExistingSession(element);
-        }
+        void new Promise(async (resolve) => {
+            if (element.sessionId) {
+                await this.getChildrenWithExistingSession(element);
+                this._objectExplorerProvider.refresh(element);
+            } else {
+                // Handle node without session
+                await this.getChildrenWithNewSession(element);
+                this._objectExplorerProvider.refresh(undefined);
+            }
+        });
 
-        // Handle node without session
-        return this.getChildrenWithNewSession(element);
+        const loadingNode: vscode.TreeItem = {
+            label: "Loading...",
+            collapsibleState: TreeItemCollapsibleState.None,
+            iconPath: new vscode.ThemeIcon("loading~spin"),
+        };
+        this._treeNodeToChildrenMap.set(element, [loadingNode]);
+        return [loadingNode];
     }
 
     // Handle root nodes retrieval
     private async getRootNodes(): Promise<vscode.TreeItem[]> {
-        this._logger.logDebug("Getting root OE nodes");
+        if (!this._rootRefreshSemaphore) {
+            this._rootRefreshSemaphore = new Semaphore();
+        }
+        await this._rootRefreshSemaphore.acquire();
+        try {
+            this._logger.logDebug("Getting root OE nodes");
 
-        // For first-time loading, build from saved connections
-        if (!this._objectExplorerProvider.objectExplorerExists) {
-            const savedConnections =
-                await this._connectionManager.connectionStore.readAllConnections();
+            // For first-time loading, build from saved connections
+            if (!this._objectExplorerProvider.objectExplorerExists) {
+                const savedConnections =
+                    await this._connectionManager.connectionStore.readAllConnections();
 
-            // If no saved connections, show the "Add Connection" node
-            if (savedConnections.length === 0) {
+                // If no saved connections, show the "Add Connection" node
+                if (savedConnections.length === 0) {
+                    this._logger.logDebug(
+                        "No saved connections found; displaying 'Add Connection' node",
+                    );
+                    return this.getAddConnectionNode();
+                }
+
+                // Build root nodes from saved connections
+                this._rootTreeNodeArray = await this.getSavedConnectionNodes();
                 this._logger.logDebug(
-                    "No saved connections found; displaying 'Add Connection' node",
+                    `Created OE root with ${this._rootTreeNodeArray.length} nodes`,
                 );
-                return this.getAddConnectionNode();
+                this._objectExplorerProvider.objectExplorerExists = true;
+            } else {
+                this._logger.logDebug(
+                    `Returning cached OE root nodes (${this._rootTreeNodeArray.length})`,
+                );
             }
 
-            // Build root nodes from saved connections
-            this._rootTreeNodeArray = await this.getSavedConnectionNodes();
-            this._logger.logDebug(`Created OE root with ${this._rootTreeNodeArray.length} nodes`);
-            this._objectExplorerProvider.objectExplorerExists = true;
-        } else {
-            this._logger.logDebug(
-                `Returning cached OE root nodes (${this._rootTreeNodeArray.length})`,
-            );
+            return this.sortByServerName(this._rootTreeNodeArray);
+        } finally {
+            this._rootRefreshSemaphore.release();
+            this._logger.logDebug("Released root refresh semaphore");
         }
-
-        return this.sortByServerName(this._rootTreeNodeArray);
     }
 
     // Handle nodes that already have a session
@@ -633,7 +665,6 @@ export class ObjectExplorerService {
         node.sessionId = sessionId;
 
         const children = await this.getChildrenWithExistingSession(node);
-        this._objectExplorerProvider.refresh(undefined);
         return children;
     }
 
