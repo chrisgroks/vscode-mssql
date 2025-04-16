@@ -13,12 +13,6 @@ import { Deferred } from "../protocol";
 import { ConnectionProfile } from "../models/connectionProfile";
 import { Logger } from "../models/logger";
 import { getConnectionDisplayName } from "../models/connectionInfo";
-import * as vscode from "vscode";
-
-type ConfigItem = IConnectionProfile | IConnectionGroup;
-
-const GLOBAL_PROFILE_ID = "global";
-const WORKSPACE_PROFILE_ID = "workspace";
 
 /**
  * Implements connection profile file storage.
@@ -249,7 +243,11 @@ export class ConnectionConfig implements IConnectionConfig {
      */
     private async writeProfilesToSettings(profiles: IConnectionProfile[]): Promise<void> {
         // Save the file
-        await this.writeConfigToSettings(profiles);
+        await this._vscodeWrapper.setConfiguration(
+            Constants.extensionName,
+            Constants.connectionsArrayName,
+            profiles,
+        );
     }
 
     /**
@@ -258,71 +256,11 @@ export class ConnectionConfig implements IConnectionConfig {
      */
     private async writeConnectionGroupsToSettings(connGroups: IConnectionGroup[]): Promise<void> {
         // Save the file
-        await this.writeConfigToSettings(connGroups);
-    }
-
-    private async writeConfigToSettings(items: ConfigItem[]): Promise<void> {
-        const workspaceFolderProfilesMap = new Map<string, ConfigItem[]>();
-        const workspaceProfiles: ConfigItem[] = [];
-        const globalProfiles: ConfigItem[] = [];
-        for (const item of items) {
-            if (item.workspaceId) {
-                switch (item.workspaceId) {
-                    case WORKSPACE_PROFILE_ID:
-                        workspaceProfiles.push(item);
-                        break;
-                    case GLOBAL_PROFILE_ID:
-                        globalProfiles.push(item);
-                        break;
-                    default:
-                        workspaceFolderProfilesMap.set(item.workspaceId, [
-                            ...(workspaceFolderProfilesMap.get(item.workspaceId) || []),
-                            item,
-                        ]);
-                        break;
-                }
-                delete item.workspaceId; // Remove the workspaceId from the profile
-            } else {
-                globalProfiles.push(item);
-            }
-        }
-
-        // Save the configs to settings
-        await vscode.workspace
-            .getConfiguration(Constants.extensionName)
-            .update(
-                Constants.connectionsArrayName,
-                globalProfiles,
-                vscode.ConfigurationTarget.Global,
-            );
-
-        if (vscode.workspace.workspaceFile) {
-            // Save the workspace profiles to settings
-            await vscode.workspace
-                .getConfiguration(Constants.extensionName)
-                .update(
-                    Constants.connectionsArrayName,
-                    workspaceProfiles,
-                    vscode.ConfigurationTarget.Workspace,
-                );
-        }
-
-        // Save the workspace folder profiles to settings
-        for (const [workspaceFolderUri, profiles] of workspaceFolderProfilesMap.entries()) {
-            const workspaceFolders = vscode.workspace.workspaceFolders;
-            for (const workspaceFolder of workspaceFolders || []) {
-                if (workspaceFolder.uri.toString() === workspaceFolderUri) {
-                    await vscode.workspace
-                        .getConfiguration(Constants.extensionName, workspaceFolder.uri)
-                        .update(
-                            Constants.connectionsArrayName,
-                            profiles,
-                            vscode.ConfigurationTarget.WorkspaceFolder,
-                        );
-                    break;
-                }
-            }
-        }
+        await this._vscodeWrapper.setConfiguration(
+            Constants.extensionName,
+            Constants.connectionGroupsArrayName,
+            connGroups,
+        );
     }
 
     /** Compare function for sorting by profile name if available, otherwise fall back to server name or connection string */
