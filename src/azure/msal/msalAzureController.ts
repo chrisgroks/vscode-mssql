@@ -19,11 +19,13 @@ import { MsalCachePluginProvider } from "./msalCachePlugin";
 import { promises as fsPromises } from "fs";
 import * as path from "path";
 import * as AzureConstants from "../constants";
+import { Semaphore } from "../../utils/semaphore";
 
 export class MsalAzureController extends AzureController {
     private _authMappings = new Map<AzureAuthType, MsalAzureAuth>();
     private _cachePluginProvider: MsalCachePluginProvider | undefined = undefined;
     protected clientApplication: PublicClientApplication;
+    private _accountTokenRefreshSemaphore: Map<string, Semaphore> = new Map();
 
     private getLoggerCallback(): ILoggerCallback {
         return (level: number, message: string, containsPii: boolean) => {
@@ -162,6 +164,14 @@ export class MsalAzureController extends AzureController {
         tenantId: string | undefined,
         settings: IAADResource,
     ): Promise<IToken | undefined> {
+        const accountKey = account.key.id;
+        let semaphore = this._accountTokenRefreshSemaphore.get(accountKey);
+        if (!semaphore) {
+            semaphore = new Semaphore();
+            this._accountTokenRefreshSemaphore.set(accountKey, semaphore);
+        }
+
+        await semaphore.acquire();
         let newAccount: IAccount;
         try {
             let azureAuth = await this.getAzureAuthInstance(getAzureActiveDirectoryConfig());
@@ -204,6 +214,8 @@ export class MsalAzureController extends AzureController {
             } else {
                 this._vscodeWrapper.showErrorMessage(ex);
             }
+        } finally {
+            semaphore.release();
         }
     }
 

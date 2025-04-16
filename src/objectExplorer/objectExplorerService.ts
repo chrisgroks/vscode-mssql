@@ -115,6 +115,7 @@ export class ObjectExplorerService {
     private handleSessionCreatedNotification(): NotificationHandler<SessionCreatedParameters> {
         const self = this;
         const handler = async (result: SessionCreatedParameters) => {
+            console.log("OE: Session created notification received: ", result);
             if (self._currentNode instanceof ConnectTreeNode) {
                 self.currentNode = getParentNode(self.currentNode);
             }
@@ -229,7 +230,12 @@ export class ObjectExplorerService {
                     let account = this._connectionManager.accountStore.getAccount(
                         profile.accountId,
                     );
-                    await this.refreshAccount(account, profile);
+                    console.log("OE: Refreshing account: ", account);
+                    try {
+                        await this.refreshAccount(account, profile);
+                    } catch (e) {
+                        console.log("OE: Error refreshing account: ", e);
+                    }
                     // Do not await when performing reconnect to allow
                     // OE node to expand after connection is established.
                     void this.reconnectProfile(self._currentNode, profile);
@@ -937,6 +943,7 @@ export class ObjectExplorerService {
     }
 
     public async refreshNode(node: TreeNodeInfo): Promise<void> {
+        console.log("Refreshing node: ", node);
         const refreshParams: RefreshParams = {
             sessionId: node.sessionId,
             nodePath: node.nodePath,

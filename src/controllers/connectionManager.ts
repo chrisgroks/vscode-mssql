@@ -36,7 +36,6 @@ import { TelemetryActions, TelemetryViews } from "../sharedInterfaces/telemetry"
 import { ObjectExplorerUtils } from "../objectExplorer/objectExplorerUtils";
 import { changeLanguageServiceForFile } from "../languageservice/utils";
 import * as events from "events";
-import { Semaphore } from "../utils/semaphore";
 
 /**
  * Information for a document's connection. Exported for testing purposes.
@@ -107,7 +106,6 @@ export default class ConnectionManager {
     public azureController: AzureController;
 
     private _event: events.EventEmitter = new events.EventEmitter();
-    private _accountTokenRefreshSemaphore: Map<string, Semaphore> = new Map();
 
     constructor(
         context: vscode.ExtensionContext,
@@ -1135,44 +1133,31 @@ export default class ConnectionManager {
         profile.user = account.displayInfo.displayName;
         profile.email = account.displayInfo.email;
 
-        // Keep track of the semaphore for this account to prevent multiple refreshes of the same account
-        const accountKey = account.key.id;
-        let semaphore = this._accountTokenRefreshSemaphore.get(accountKey);
-        if (!semaphore) {
-            semaphore = new Semaphore();
-            this._accountTokenRefreshSemaphore.set(accountKey, semaphore);
-        }
+        const azureAccountToken = await this.azureController.refreshAccessToken(
+            account,
+            this.accountStore,
+            profile.tenantId,
+            providerSettings.resources.databaseResource!,
+        );
 
-        await semaphore.acquire();
-        try {
-            const azureAccountToken = await this.azureController.refreshAccessToken(
-                account,
-                this.accountStore,
-                profile.tenantId,
-                providerSettings.resources.databaseResource!,
+        if (!azureAccountToken) {
+            let errorMessage = LocalizedConstants.msgAccountRefreshFailed;
+            let refreshResult = await this.vscodeWrapper.showErrorMessage(
+                errorMessage,
+                LocalizedConstants.refreshTokenLabel,
             );
-
-            if (!azureAccountToken) {
-                let errorMessage = LocalizedConstants.msgAccountRefreshFailed;
-                let refreshResult = await this.vscodeWrapper.showErrorMessage(
-                    errorMessage,
-                    LocalizedConstants.refreshTokenLabel,
+            if (refreshResult === LocalizedConstants.refreshTokenLabel) {
+                await this.azureController.populateAccountProperties(
+                    profile,
+                    this.accountStore,
+                    providerSettings.resources.databaseResource!,
                 );
-                if (refreshResult === LocalizedConstants.refreshTokenLabel) {
-                    await this.azureController.populateAccountProperties(
-                        profile,
-                        this.accountStore,
-                        providerSettings.resources.databaseResource!,
-                    );
-                } else {
-                    throw new Error(LocalizedConstants.cannotConnect);
-                }
             } else {
-                connectionInfo.azureAccountToken = azureAccountToken.token;
-                connectionInfo.expiresOn = azureAccountToken.expiresOn;
+                throw new Error(LocalizedConstants.cannotConnect);
             }
-        } finally {
-            semaphore.release();
+        } else {
+            connectionInfo.azureAccountToken = azureAccountToken.token;
+            connectionInfo.expiresOn = azureAccountToken.expiresOn;
         }
     }
 
