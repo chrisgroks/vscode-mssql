@@ -9,6 +9,7 @@ import { NodeInfo } from "../models/contracts/objectExplorer/nodeInfo";
 import { ObjectExplorerUtils } from "./objectExplorerUtils";
 import * as Constants from "../constants/constants";
 import { IConnectionInfo, ITreeNodeInfo, ObjectMetadata } from "vscode-mssql";
+import { IConnectionProfile } from "../models/interfaces";
 
 export class TreeNodeInfo extends vscode.TreeItem implements ITreeNodeInfo {
     private _nodePath: string;
@@ -60,6 +61,17 @@ export class TreeNodeInfo extends vscode.TreeItem implements ITreeNodeInfo {
                 this.iconPath = ObjectExplorerUtils.iconPath(Constants.database_red);
             }
         }
+        this.id = this.generateId();
+    }
+
+    private generateId(): string {
+        let id = "";
+        if (this._connectionInfo) {
+            if (this._connectionInfo) {
+                id += (this._connectionInfo as IConnectionProfile).id;
+            }
+        }
+        return id;
     }
 
     public static fromNodeInfo(
@@ -168,6 +180,7 @@ export class TreeNodeInfo extends vscode.TreeItem implements ITreeNodeInfo {
     /** Setters */
     public set nodePath(value: string) {
         this._nodePath = value;
+        this.id = this.generateId();
     }
 
     public set nodeStatus(value: string) {
@@ -219,6 +232,7 @@ export class TreeNodeInfo extends vscode.TreeItem implements ITreeNodeInfo {
 
     public updateConnectionInfo(value: IConnectionInfo): void {
         this._connectionInfo = value;
+        this.id = this.generateId();
     }
 
     private _updateContextValue() {

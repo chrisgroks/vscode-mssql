@@ -7,16 +7,20 @@ import * as vscode from "vscode";
 import * as vscodeMssql from "vscode-mssql";
 import { TreeNodeInfo } from "../treeNodeInfo";
 import * as ConnInfo from "../../models/connectionInfo";
-import * as Constants from "../../constants/constants";
 import { NodeInfo } from "../../models/contracts/objectExplorer/nodeInfo";
 import { ObjectExplorerUtils } from "../objectExplorerUtils";
 import { IConnectionProfile } from "../../models/interfaces";
+import { ObjectExplorerConstants } from "../objectExplorerConstants";
 
-const disconnectedNodeContextValue: vscodeMssql.TreeNodeContextValue = {
-    type: Constants.disconnectedServerNodeType,
-    filterable: false,
-    hasFilters: false,
-    subType: "",
+const getDisconnectedNodeContextValue = (
+    connectionInfo: vscodeMssql.IConnectionInfo,
+): vscodeMssql.TreeNodeContextValue => {
+    return {
+        type: ObjectExplorerConstants.disconnectedServerNodeType,
+        filterable: false,
+        hasFilters: false,
+        subType: connectionInfo.database ? ObjectExplorerConstants.databaseNodeType : undefined,
+    };
 };
 
 export class ConnectionNode extends TreeNodeInfo {
@@ -28,19 +32,20 @@ export class ConnectionNode extends TreeNodeInfo {
 
         super(
             label,
-            disconnectedNodeContextValue,
+            getDisconnectedNodeContextValue(connectionInfo),
             vscode.TreeItemCollapsibleState.Collapsed,
             undefined,
             undefined,
-            Constants.disconnectedServerNodeType,
+            ObjectExplorerConstants.disconnectedServerNodeType,
             undefined,
             connectionInfo,
             undefined,
             undefined,
         );
         if (connectionInfo.database) {
-            this.iconPath = ObjectExplorerUtils.iconPath(Constants.database_red);
-            this.nodeSubType = Constants.databaseLabel;
+            this.iconPath = ObjectExplorerUtils.iconPath(
+                ObjectExplorerConstants.disconnectedDatabaseIcon,
+            );
         }
     }
 
@@ -53,15 +58,15 @@ export class ConnectionNode extends TreeNodeInfo {
     ) {
         this.label = label;
         this.context = {
-            type: Constants.serverLabel,
+            type: ObjectExplorerConstants.serverNodeType,
             filterable: nodeInfo.filterableProperties?.length > 0,
             hasFilters: false,
-            subType: connectionInfo.database ? "Database" : nodeInfo.nodeSubType,
+            subType: connectionInfo.database ? ObjectExplorerConstants.databaseNodeType : "",
         };
         this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
         this.nodePath = nodeInfo.nodePath;
         this.nodeStatus = nodeInfo.nodeStatus;
-        this.nodeType = Constants.serverLabel;
+        this.nodeType = ObjectExplorerConstants.serverNodeType;
         this.sessionId = sessionId;
         this.updateConnectionInfo(connectionInfo);
         this.parentNode = parentNode;
@@ -69,39 +74,35 @@ export class ConnectionNode extends TreeNodeInfo {
         this.updateMetadata(nodeInfo.metadata);
 
         if (connectionInfo.database) {
-            this.iconPath = ObjectExplorerUtils.iconPath(Constants.database_green);
+            this.iconPath = ObjectExplorerUtils.iconPath(
+                ObjectExplorerConstants.connectedDatabaseIcon,
+            );
         } else {
-            this.iconPath = ObjectExplorerUtils.iconPath(Constants.serverLabel);
+            this.iconPath = ObjectExplorerUtils.iconPath(ObjectExplorerConstants.serverNodeType);
         }
     }
 
     public onDisconnected() {
         this.label = ConnInfo.getSimpleConnectionDisplayName(this.connectionInfo);
-        this.context = {
-            type: Constants.disconnectedServerNodeType,
-            filterable: false,
-            hasFilters: false,
-            subType: "",
-        };
+        this.context = getDisconnectedNodeContextValue(this.connectionInfo);
         this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
         this.nodePath = undefined;
         this.nodeStatus = undefined;
-        this.nodeType = Constants.disconnectedServerNodeType;
+        this.nodeType = ObjectExplorerConstants.disconnectedServerNodeType;
         this.sessionId = undefined;
         this.parentNode = undefined;
         this.filterableProperties = undefined;
-        this.nodeSubType = this.connectionInfo.database ? "Database" : undefined;
-
         if (!(this.connectionInfo as IConnectionProfile).savePassword) {
             const profile = this.connectionInfo;
             profile.password = "";
             this.updateConnectionInfo(profile);
         }
-
         if (this.connectionInfo.database) {
-            this.iconPath = ObjectExplorerUtils.iconPath(Constants.database_red);
+            this.iconPath = ObjectExplorerUtils.iconPath(
+                ObjectExplorerConstants.connectedDatabaseIcon,
+            );
         } else {
-            this.iconPath = ObjectExplorerUtils.iconPath(Constants.disconnectedServerNodeType);
+            this.iconPath = ObjectExplorerUtils.iconPath(ObjectExplorerConstants.serverNodeType);
         }
     }
 }
