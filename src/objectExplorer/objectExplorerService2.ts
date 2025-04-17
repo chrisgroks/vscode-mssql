@@ -17,6 +17,7 @@ import {
 } from "../models/contracts/objectExplorer/expandNodeRequest";
 import { Logger } from "../models/logger";
 import { Deferred } from "../protocol";
+import { ConnectionGroupNode } from "./nodes/connectionGroupNode";
 import { TreeNodeInfo } from "./treeNodeInfo";
 
 export class ObjectExplorerService2 {
@@ -46,7 +47,7 @@ export class ObjectExplorerService2 {
         this._stsClient.onNotification(ExpandCompleteNotification.type, this.onExpandComplete);
     }
 
-    public onSessionCreated(result: SessionCreatedParameters) {
+    private onSessionCreated(result: SessionCreatedParameters) {
         const deferred = this._pendingSessionPromises.get(result.sessionId);
         if (deferred) {
             deferred.resolve(result);
@@ -58,7 +59,7 @@ export class ObjectExplorerService2 {
         }
     }
 
-    public onExpandComplete(result: ExpandResponse) {
+    private onExpandComplete(result: ExpandResponse) {
         const deferred = this._pendingExpandPromises.get(result);
         if (deferred) {
             deferred.resolve(result);
@@ -70,5 +71,14 @@ export class ObjectExplorerService2 {
         }
     }
 
-    public getChildren(element: TreeNodeInfo) {}
+    /**
+     *
+     * @param element The element to expand. If undefined, the root node will be expanded.
+     */
+    public getChildren(element?: TreeNodeInfo) {
+        if (!element) {
+        }
+    }
+
+    public expandConnectionGroup(connectionGroup: ConnectionGroupNode): Promise<TreeNodeInfo[]> {}
 }

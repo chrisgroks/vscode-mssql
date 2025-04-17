@@ -219,6 +219,11 @@ export class ConnectionConfig implements IConnectionConfig {
         );
     }
 
+    public getRootGroupFromSettings(): IConnectionGroup | undefined {
+        const groups = this.getGroupsFromSettings();
+        return groups.find((group) => group.name === this.RootGroupName);
+    }
+
     private getArrayFromSettings<T>(configSection: string, global: boolean = true): T[] {
         let configuration = this._vscodeWrapper.getConfiguration(
             Constants.extensionName,
