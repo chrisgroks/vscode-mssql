@@ -530,7 +530,14 @@ export function deleteCredentialError(id: string, error: string) {
 export let msgClearedRecentConnectionsWithErrors = l10n.t(
     "The recent connections list has been cleared but there were errors while deleting some associated credentials. View the errors in the MSSQL output channel.",
 );
-export let connectProgressNoticationTitle = l10n.t("Testing connection profile...");
+export let connectProgressNoticationTitle = l10n.t("Establishing connection...");
+export function connectToServerProgressNoticationTitle(serverName: string) {
+    return l10n.t({
+        message: "Establishing connection to {0}...",
+        args: [serverName],
+        comment: ["{0} is the server name"],
+    });
+}
 export let msgMultipleSelectionModeNotSupported = l10n.t(
     "Running query is not supported when the editor is in multiple selection mode.",
 );

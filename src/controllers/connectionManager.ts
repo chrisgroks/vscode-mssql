@@ -1207,11 +1207,17 @@ export default class ConnectionManager {
         fileUri: string,
         connectionCreds: IConnectionInfo,
         promise?: Deferred<boolean>,
+        customMessage?: string,
     ): Promise<boolean> {
         return await vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Notification,
-                title: LocalizedConstants.connectProgressNoticationTitle,
+                title:
+                    (customMessage ?? Utils.isNotEmpty(connectionCreds.server))
+                        ? LocalizedConstants.connectToServerProgressNoticationTitle(
+                              connectionCreds.server,
+                          )
+                        : LocalizedConstants.connectProgressNoticationTitle,
                 cancellable: false,
             },
             async (_progress, _cancellationToken) => {
