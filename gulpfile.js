@@ -184,6 +184,7 @@ async function generateReactWebviewsBundle() {
 		 */
 		entryPoints: {
 			'addFirewallRule': 'src/reactviews/pages/AddFirewallRule/index.tsx',
+			'azureAccountManagement': 'src/reactviews/pages/AzureAccountManagement/index.tsx',
 			'connectionDialog': 'src/reactviews/pages/ConnectionDialog/index.tsx',
 			'executionPlan': 'src/reactviews/pages/ExecutionPlan/index.tsx',
 			'tableDesigner': 'src/reactviews/pages/TableDesigner/index.tsx',
