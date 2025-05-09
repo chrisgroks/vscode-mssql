@@ -23,6 +23,7 @@ export enum TelemetryViews {
     ExecutionPlan = "ExecutionPlan",
     AddFirewallRule = "AddFirewallRule",
     MssqlCopilot = "MssqlCopilot",
+    AzureAccountManagement = "AzureAccountManagement",
 }
 
 export enum TelemetryActions {
@@ -91,6 +92,7 @@ export enum TelemetryActions {
     Feedback = "Feedback",
     ChatWithDatabase = "ChatWithDatabase",
     StartConversation = "StartConversation",
+    AzureSignIn = "AzureSignIn",
 }
 
 /**

@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { createContext } from "react";
+import { createContext, useEffect } from "react";
 import { useVscodeWebview } from "../../common/vscodeWebviewProvider";
 import { getCoreRPCs } from "../../common/utils";
 import { WebviewContextProps } from "../../../sharedInterfaces/webview";
@@ -14,7 +14,11 @@ import {
 
 // Define context props that will be passed to components
 export interface AzureAccountManagementContextProps
-    extends WebviewContextProps<AzureAccountManagementState> {}
+    extends WebviewContextProps<AzureAccountManagementState> {
+    closeDialog: () => void;
+    signIntoAzureAccount: () => void;
+    selectAccount: (account: string) => void;
+}
 
 // Create context
 const AzureAccountManagementContext = createContext<AzureAccountManagementContextProps | undefined>(
@@ -30,22 +34,27 @@ interface AzureAccountManagementProviderProps {
 const AzureAccountManagementStateProvider: React.FC<AzureAccountManagementProviderProps> = ({
     children,
 }) => {
-    const webviewState = useVscodeWebview<
-        AzureAccountManagementState,
-        AzureAccountManagementReducers
-    >();
-    const azureAccountManagementState = webviewState?.state;
+    const context = useVscodeWebview<AzureAccountManagementState, AzureAccountManagementReducers>();
 
-    if (!webviewState || !azureAccountManagementState) {
+    if (!context) {
         return undefined;
     }
 
     return (
         <AzureAccountManagementContext.Provider
             value={{
-                state: webviewState,
-                themeKind: webviewState?.themeKind,
-                ...getCoreRPCs(webviewState),
+                state: context,
+                themeKind: context?.themeKind,
+                ...getCoreRPCs(context),
+                closeDialog: () => {
+                    context.extensionRpc.action("closeDialog");
+                },
+                signIntoAzureAccount: () => {
+                    context.extensionRpc.action("signIntoAzureAccount");
+                },
+                selectAccount: (account: string) => {
+                    context.extensionRpc.action("selectAccount", { account });
+                },
             }}>
             {children}
         </AzureAccountManagementContext.Provider>

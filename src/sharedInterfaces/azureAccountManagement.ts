@@ -6,8 +6,13 @@
 // Define types for state and reducers
 export interface AzureAccountManagementState {
     message: string;
+    accounts: string[]; // List of active Azure accounts
+    isLoading?: boolean; // Loading state for operations
+    selectedAccount?: string; // Currently selected account
 }
 
 export interface AzureAccountManagementReducers {
-    closeDialog: () => void;
+    closeDialog: {};
+    signIntoAzureAccount: {};
+    selectAccount: { account: string };
 }

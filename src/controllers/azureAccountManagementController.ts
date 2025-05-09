@@ -30,6 +30,7 @@ export class AzureAccountManagementController extends ReactWebviewPanelControlle
             "azureAccountManagement",
             "azureAccountManagement",
             {
+                accounts: [],
                 message: "Welcome to Azure Account Management",
             },
             {
