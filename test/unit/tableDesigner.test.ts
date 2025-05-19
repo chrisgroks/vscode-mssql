@@ -15,6 +15,7 @@ import { TreeNodeInfo } from "../../src/objectExplorer/nodes/treeNodeInfo";
 import { TableDesignerService } from "../../src/services/tableDesignerService";
 import UntitledSqlDocumentService from "../../src/controllers/untitledSqlDocumentService";
 import ConnectionManager from "../../src/controllers/connectionManager";
+import { info } from "console";
 
 suite("TableDesignerWebviewController tests", () => {
     let sandbox: sinon.SinonSandbox;
@@ -25,8 +26,11 @@ suite("TableDesignerWebviewController tests", () => {
     let mockConnectionManager: TypeMoq.IMock<ConnectionManager>;
     let mockTableDesignerService: TableDesignerService;
     let mockUntitledSqlDocumentService: UntitledSqlDocumentService;
+    let newQueryStub: sinon.SinonStub;
     const tableName = "TestTable";
     let mockResult: any;
+    let mockTableChangeInfo: any;
+    let mockPayload: any;
 
     setup(async () => {
         sandbox = sinon.createSandbox();
@@ -106,6 +110,18 @@ suite("TableDesignerWebviewController tests", () => {
             uiSchema: {},
         };
 
+        mockTableChangeInfo = {
+            type: treeNode.object.nodeType,
+            source: treeNode.object.nodePath,
+        };
+
+        mockPayload = {
+            table: mockResult.tableInfo,
+            tableChangeInfo: mockTableChangeInfo,
+        };
+
+        newQueryStub = (mockUntitledSqlDocumentService.newQuery as sinon.SinonStub).resolves();
+
         (mockTableDesignerService.initializeTableDesigner as sinon.SinonStub).resolves(mockResult);
 
         sandbox.stub(tdTab, "getDesignerView").returns({ tabs: [] });
@@ -157,14 +173,6 @@ suite("TableDesignerWebviewController tests", () => {
         let processTableEditStub = (
             mockTableDesignerService.processTableEdit as sinon.SinonStub
         ).resolves(editResponse);
-
-        const mockPayload = {
-            table: mockResult.tableInfo,
-            tableChangeInfo: {
-                type: treeNode.object.nodeType,
-                source: treeNode.object.nodePath,
-            },
-        };
 
         const callState = (controller as any)._state;
 
@@ -241,18 +249,18 @@ suite("TableDesignerWebviewController tests", () => {
             mockTableDesignerService.publishChanges as sinon.SinonStub
         ).resolves(publishResponse);
 
-        const mockPayload = {
+        const mockPublishPayload = {
             table: mockResult.tableInfo,
         };
 
         const callState = (controller as any)._state;
 
-        let result = await controller["_reducers"]["publishChanges"](callState, mockPayload);
+        let result = await controller["_reducers"]["publishChanges"](callState, mockPublishPayload);
 
         assert.ok(publishChangesStub.calledOnce, "publishChanges should be called once");
         assert.deepStrictEqual(
             publishChangesStub.firstCall.args,
-            [mockPayload.table],
+            [mockPublishPayload.table],
             "publishChanges should be called with correct arguments",
         );
         assert.deepStrictEqual(
@@ -278,7 +286,7 @@ suite("TableDesignerWebviewController tests", () => {
         const errorMessage = "error message";
         sinon.stub(mockTableDesignerService, "publishChanges").rejects(new Error(errorMessage));
 
-        result = await controller["_reducers"]["publishChanges"](callState, mockPayload);
+        result = await controller["_reducers"]["publishChanges"](callState, mockPublishPayload);
 
         assert.deepStrictEqual(
             result.publishingError,
@@ -291,5 +299,285 @@ suite("TableDesignerWebviewController tests", () => {
             td.LoadState.Error,
             "State should contain correct status",
         );
+    });
+
+    test("should call generateScript in generateScript reducer", async () => {
+        let scriptResponse = "CREATE TABLE Test (Id INT);";
+
+        // First scenario: no issues, view is defined
+        let scriptStub = (mockTableDesignerService.generateScript as sinon.SinonStub).resolves(
+            scriptResponse,
+        );
+
+        const mockScriptPayload = {
+            table: mockResult.tableInfo,
+        };
+
+        const callState = (controller as any)._state;
+
+        let result = await controller["_reducers"]["generateScript"](callState, mockScriptPayload);
+
+        assert.ok(scriptStub.calledOnce, "generateScript should be called once");
+        assert.deepStrictEqual(
+            scriptStub.firstCall.args,
+            [mockScriptPayload.table],
+            "generateScript should be called with correct arguments",
+        );
+        assert.ok(newQueryStub.calledOnce, "newQuery should be called once");
+        assert.deepStrictEqual(
+            newQueryStub.firstCall.args,
+            [scriptResponse],
+            "newQuery should be called with the generated script",
+        );
+
+        assert.deepStrictEqual(
+            result.apiState.generateScriptState,
+            td.LoadState.Loaded,
+            "Script State should be loaded",
+        );
+
+        assert.deepStrictEqual(
+            result.apiState.previewState,
+            td.LoadState.NotStarted,
+            "Preview State should be not started",
+        );
+        scriptStub.restore();
+        newQueryStub.restore();
+    });
+
+    test("should call generatePreviewReport in generatePreviewReport reducer", async () => {
+        const previewResponse = {
+            schemaValidationError: undefined,
+            report: "Mock preview report content",
+            mimeType: "text/html",
+        };
+
+        const generatePreviewStub = (
+            mockTableDesignerService.generatePreviewReport as sinon.SinonStub
+        ).resolves(previewResponse);
+
+        const mockPreviewPayload = {
+            table: mockResult.tableInfo,
+        };
+
+        const callState = (controller as any)._state;
+
+        // Success scenario
+        let result = await controller["_reducers"]["generatePreviewReport"](
+            callState,
+            mockPreviewPayload,
+        );
+
+        assert.ok(generatePreviewStub.calledOnce, "generatePreviewReport should be called once");
+        assert.deepStrictEqual(
+            generatePreviewStub.firstCall.args,
+            [mockPreviewPayload.table],
+            "generatePreviewReport should be called with correct arguments",
+        );
+
+        assert.deepStrictEqual(
+            result.apiState.previewState,
+            td.LoadState.Loaded,
+            "Preview state should be Loaded when no validation error",
+        );
+        assert.deepStrictEqual(
+            result.apiState.publishState,
+            td.LoadState.NotStarted,
+            "Publish state should remain NotStarted",
+        );
+        assert.deepStrictEqual(
+            result.generatePreviewReportResult,
+            previewResponse,
+            "Should store the preview report result",
+        );
+
+        generatePreviewStub.restore();
+
+        // Error scenario
+        const errorMessage = "Preview generation failed";
+        sinon
+            .stub(mockTableDesignerService, "generatePreviewReport")
+            .rejects(new Error(errorMessage));
+
+        result = await controller["_reducers"]["generatePreviewReport"](
+            callState,
+            mockPreviewPayload,
+        );
+
+        assert.deepStrictEqual(
+            result.apiState.previewState,
+            td.LoadState.Error,
+            "Preview state should be Error on failure",
+        );
+        assert.deepStrictEqual(
+            result.apiState.publishState,
+            td.LoadState.NotStarted,
+            "Publish state should remain NotStarted on failure",
+        );
+        assert.strictEqual(
+            result.generatePreviewReportResult.schemaValidationError,
+            errorMessage,
+            "Should include error message in result",
+        );
+    });
+
+    test("should call initialize in initializeTableDesigner reducer", async () => {
+        const initializeSpy = sinon.spy(controller as any, "initialize");
+
+        const callState = (controller as any)._state;
+
+        await controller["_reducers"]["initializeTableDesigner"](callState, mockTableChangeInfo);
+
+        assert.ok(initializeSpy.calledOnce, "private initialize should be called once");
+
+        (initializeSpy as sinon.SinonSpy).restore();
+    });
+
+    test("should call newQuery with script content in scriptAsCreate reducer", async () => {
+        const mockScript = "CREATE TABLE example (...);";
+
+        const state = {
+            model: {
+                script: {
+                    value: mockScript,
+                },
+            },
+        };
+
+        await controller["_reducers"]["scriptAsCreate"](state, mockPayload);
+
+        assert.ok(
+            newQueryStub.calledWith(mockScript),
+            "newQuery should be called with script content",
+        );
+
+        newQueryStub.restore();
+    });
+
+    test("should set mainPaneTab in setTab reducer", async () => {
+        const state = { tabStates: { mainPaneTab: "" } };
+        const tabId = "properties";
+
+        const result = await controller["_reducers"]["setTab"](state as any, { tabId });
+
+        assert.strictEqual(
+            result.tabStates.mainPaneTab,
+            tabId,
+            "mainPaneTab should be set correctly",
+        );
+    });
+
+    test("should set propertiesPaneData in setPropertiesComponents reducer", async () => {
+        const mockComponents = [{ type: "input", id: "name" }];
+        const state = {};
+
+        const result = await controller["_reducers"]["setPropertiesComponents"](state, {
+            components: mockComponents,
+        });
+
+        assert.deepStrictEqual(
+            result.propertiesPaneData,
+            mockComponents,
+            "propertiesPaneData should be set correctly",
+        );
+    });
+
+    test("should set resultPaneTab in setResultTab reducer", async () => {
+        const state = { tabStates: { resultPaneTab: "" } };
+        const tabId = "preview";
+
+        const result = await controller["_reducers"]["setResultTab"](state as any, { tabId });
+
+        assert.strictEqual(
+            result.tabStates.resultPaneTab,
+            tabId,
+            "resultPaneTab should be set correctly",
+        );
+    });
+
+    test("should copy script to clipboard in copyScriptAsCreateToClipboard reducer", async () => {
+        const infoStub = sinon.stub(vscode.window, "showInformationMessage").resolves();
+        const writeTextStub = sinon.stub().resolves();
+        const mockEnvClipboard = {
+            ...vscode.env.clipboard,
+            writeText: writeTextStub,
+        };
+
+        sandbox.replaceGetter(vscode.env, "clipboard", () => mockEnvClipboard);
+
+        // Setup state
+        const state = {
+            model: {
+                script: {
+                    value: "Test value",
+                },
+            },
+        };
+
+        await controller["_reducers"]["copyScriptAsCreateToClipboard"](state, mockPayload);
+
+        assert.ok(writeTextStub.calledOnce, "Clipboard writeText should be called once");
+
+        assert.deepStrictEqual(
+            writeTextStub.firstCall.args,
+            ["Test value"],
+            "writeStub should be called with correct arguments",
+        );
+
+        infoStub.restore();
+    });
+
+    test("should dispose panel and send telemetry in closeDesigner reducer", async () => {
+        const disposeStub = sinon.stub(controller.panel, "dispose");
+
+        const state = (controller as any)._state;
+
+        await controller["_reducers"]["closeDesigner"](state, mockPayload);
+
+        assert.ok(disposeStub.calledOnce, "panel.dispose should be called");
+
+        disposeStub.restore();
+    });
+
+    test("should set publishState and send telemetry in continueEditing reducer", async () => {
+        const state = (controller as any)._state;
+
+        await controller["_reducers"]["continueEditing"](state, mockPayload);
+
+        assert.strictEqual(
+            controller.state.apiState.publishState,
+            td.LoadState.NotStarted,
+            "publishState should be set to NotStarted",
+        );
+    });
+
+    test("should copy publishing error to clipboard in copyPublishErrorToClipboard reducer", async () => {
+        const writeTextStub = sinon.stub().resolves();
+        const showInfoStub = sinon.stub().resolves();
+
+        const mockEnvClipboard = {
+            ...vscode.env.clipboard,
+            writeText: writeTextStub,
+        };
+
+        // Replace clipboard and window with stubs
+        sandbox.replaceGetter(vscode.env, "clipboard", () => mockEnvClipboard);
+        sandbox.replace(vscode.window, "showInformationMessage", showInfoStub);
+
+        // Setup state
+        const state = {
+            publishingError: "Something went wrong",
+        };
+
+        await controller["_reducers"]["copyPublishErrorToClipboard"](state, mockPayload);
+
+        assert.ok(writeTextStub.calledOnce, "Clipboard writeText should be called once");
+        assert.strictEqual(
+            writeTextStub.firstCall.args[0],
+            "Something went wrong",
+            "writeText should be called with the publishing error",
+        );
+
+        assert.ok(showInfoStub.calledOnce, "showInformationMessage should be called once");
     });
 });
