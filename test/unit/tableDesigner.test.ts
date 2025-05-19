@@ -16,19 +16,19 @@ import { TableDesignerService } from "../../src/services/tableDesignerService";
 import UntitledSqlDocumentService from "../../src/controllers/untitledSqlDocumentService";
 import ConnectionManager from "../../src/controllers/connectionManager";
 
-suite("TableDesignerWebviewController", () => {
+suite("TableDesignerWebviewController tests", () => {
     let sandbox: sinon.SinonSandbox;
     let mockContext: vscode.ExtensionContext;
     let mockVscodeWrapper: TypeMoq.IMock<VscodeWrapper>;
     let controller: TableDesignerWebviewController;
     let treeNode: TypeMoq.IMock<TreeNodeInfo>;
-    let mockInitialState: td.TableDesignerWebviewState;
     let mockConnectionManager: TypeMoq.IMock<ConnectionManager>;
     let mockTableDesignerService: TableDesignerService;
     let mockUntitledSqlDocumentService: UntitledSqlDocumentService;
-    let mockNode: TreeNodeInfo;
+    const tableName = "TestTable";
+    let mockResult: any;
 
-    setup(() => {
+    setup(async () => {
         sandbox = sinon.createSandbox();
         mockContext = {
             extensionUri: vscode.Uri.parse("file://test"),
@@ -39,25 +39,76 @@ suite("TableDesignerWebviewController", () => {
         mockTableDesignerService = sandbox.createStubInstance(TableDesignerService);
         mockUntitledSqlDocumentService = sandbox.createStubInstance(UntitledSqlDocumentService);
         mockConnectionManager = TypeMoq.Mock.ofType<ConnectionManager>();
+
+        const mockConnectionDetails = {
+            server: "localhost",
+            database: "master",
+            connectionString: "Server=localhost;Database=master;",
+            authenticationType: "SqlLogin",
+        };
+
+        mockConnectionManager
+            .setup((m) => m.createConnectionDetails(TypeMoq.It.isAny()))
+            .returns(() => mockConnectionDetails as any);
+        mockConnectionManager
+            .setup((m) =>
+                m.getConnectionString(TypeMoq.It.isAny(), TypeMoq.It.isAny(), TypeMoq.It.isAny()),
+            )
+            .returns(() => Promise.resolve(mockConnectionDetails.connectionString));
         mockConnectionManager
             .setup((mgr) => mgr.getUriForConnection(TypeMoq.It.isAny()))
             .returns(() => "localhost,1433_undefined_sa_undefined");
 
-        const parentNode = TypeMoq.Mock.ofType(TreeNodeInfo, TypeMoq.MockBehavior.Loose);
         treeNode = TypeMoq.Mock.ofType(TreeNodeInfo, TypeMoq.MockBehavior.Loose);
         treeNode.setup((t) => t.nodeType).returns(() => "Table");
-        treeNode.setup((t) => t.filters).returns(() => []);
         treeNode.setup((t) => t.nodePath).returns(() => "localhost,1433/Databases");
+        treeNode.setup((t) => t.label).returns(() => tableName);
+        treeNode
+            .setup((t) => t.context)
+            .returns(
+                () =>
+                    ({
+                        subType: "Table",
+                    }) as any,
+            );
 
-        mockInitialState = {
-            apiState: {
-                editState: td.LoadState.NotStarted,
-                generateScriptState: td.LoadState.NotStarted,
-                previewState: td.LoadState.NotStarted,
-                publishState: td.LoadState.NotStarted,
-                initializeState: td.LoadState.Loading,
-            },
+        // Arrange
+        const mockConnectionProfile = {
+            server: "localhost",
+            database: undefined,
+            authenticationType: "SqlLogin",
         };
+
+        const mockMetadata = {
+            schema: "dbo",
+            name: tableName,
+        };
+
+        treeNode.setup((t) => t.connectionProfile).returns(() => mockConnectionProfile as any);
+        treeNode.setup((t) => t.metadata).returns(() => mockMetadata as any);
+
+        assert.deepStrictEqual(
+            treeNode.object.connectionProfile,
+            mockConnectionProfile,
+            "Connection profile should be defined",
+        );
+
+        mockResult = {
+            tableInfo: {
+                title: "TestTable",
+                columns: [],
+                primaryKey: null,
+                foreignKeys: [],
+                indexes: [],
+            },
+            issues: [],
+            viewModel: {},
+            uiSchema: {},
+        };
+
+        (mockTableDesignerService.initializeTableDesigner as sinon.SinonStub).resolves(mockResult);
+
+        sandbox.stub(tdTab, "getDesignerView").returns({ tabs: [] });
 
         controller = new TableDesignerWebviewController(
             mockContext,
@@ -65,352 +116,180 @@ suite("TableDesignerWebviewController", () => {
             mockTableDesignerService,
             mockConnectionManager.object,
             mockUntitledSqlDocumentService,
+            treeNode.object,
         );
         controller.revealToForeground();
-    });
 
-    teardown(() => {
-        sandbox.restore();
-    });
-
-    test("should initialize with correct state and webview title", () => {
-        assert.deepStrictEqual(controller.state, mockInitialState, "Initial state should match");
-        assert.deepStrictEqual(
+        assert.strictEqual(
             controller.panel.title,
             "Table Designer",
-            "Webview Title should match",
+            "Panel title should be table name",
         );
-    });
-
-    test("Controller should fire onSubmit and dispose panel when 'submit' reducer is triggered", async () => {
-        const fireSpy = sandbox.spy((controller as any)._onSubmit, "fire");
-        const disposeStub = sandbox.stub((controller as any).panel, "dispose");
-
-        const result = await controller["_reducers"]["submit"](mockInitialState, {
-            filters: expectedFilters,
-        });
-
-        assert.ok(fireSpy.calledOnce, "Submit should be fired once");
-        assert.deepStrictEqual(fireSpy.firstCall.args, [expectedFilters]);
-        assert.ok(disposeStub.calledOnce, "Panel should be disposed");
-        assert.deepStrictEqual(result, mockInitialState);
-    });
-
-    test("Controller should fire onCancel and dispose panel when 'cancel' reducer is triggered", async () => {
-        const fireSpy = sandbox.spy((controller as any)._onCancel, "fire");
-        const disposeStub = sandbox.stub((controller as any).panel, "dispose");
-
-        const result = await controller["_reducers"]["cancel"](mockInitialState, {});
-
-        assert.ok(fireSpy.calledOnce, "Cancel should be fired once");
-        assert.deepStrictEqual(fireSpy.firstCall.args, []);
-        assert.ok(disposeStub.calledOnce, "Panel should be disposed");
-        assert.deepStrictEqual(result, mockInitialState);
-    });
-
-    test("Controller should load and update state with loadData", () => {
-        const testState: ObjectExplorerFilterState = {
-            filterProperties: [
-                { name: "prop1", displayName: "Property 1", type: 0, description: "description" },
-            ],
-            existingFilters: [{ name: "prop1", operator: 0, value: "123" }],
-            nodePath: "node1",
-        };
-
-        controller.loadData(testState);
-        const internalState = controller.state;
-        assert.deepStrictEqual(internalState, testState);
-    });
-
-    test("GetFilters should resolve with submitted filters", async () => {
-        // Start the getFilters promise
-        const filtersPromise = ObjectExplorerFilter.getFilters(
-            mockContext,
-            mockVscodeWrapper.object,
-            treeNode.object,
-        );
-
-        const internalController = (ObjectExplorerFilter as any)._filterWebviewController;
-
-        // Act as if the user submitted filters
-        await internalController._reducers.submit(mockInitialState, {
-            filters: expectedFilters,
-        });
-
-        const result = await filtersPromise;
-
-        assert.deepStrictEqual(result, expectedFilters);
-    });
-
-    test("GetFilters should resolve empty on cancel", async () => {
-        const filtersPromise = ObjectExplorerFilter.getFilters(
-            mockContext,
-            mockVscodeWrapper.object,
-            treeNode.object,
-        );
-
-        const internalController = (ObjectExplorerFilter as any)._filterWebviewController;
-
-        await internalController._reducers.cancel(mockInitialState, {});
-
-        const result = await filtersPromise;
-
-        assert.strictEqual(result, undefined);
-    });
-});
-
-suite("ObjectExplorerFilterUtils", () => {
-    let sandbox: sinon.SinonSandbox;
-    let firstValueEmptyError: any;
-    let secondValueEmptyError: any;
-    let firstValueLessThanSecondError: any;
-    const strings: Record<string, string> = new Proxy(
-        {},
-        {
-            get: (_, prop: string) => prop,
-        },
-    );
-
-    setup(() => {
-        sandbox = sinon.createSandbox();
-        // pr comment: You can stub l10.t and just return return the passed string instead of doing this. Does that not work?
-        ObjectExplorerFilterUtils.initializeStrings(strings);
-
-        firstValueEmptyError = (op: string, name: string) =>
-            `The first value must be set for the ${op} operator in the ${name} filter`;
-
-        secondValueEmptyError = (op: string, name: string) =>
-            `The second value must be set for the ${op} operator in the ${name} filter`;
-
-        firstValueLessThanSecondError = (op: string, name: string) =>
-            `The first value must be less than the second value for the ${op} operator in the ${name} filter`;
+        await (controller as any).initialize();
     });
 
     teardown(() => {
         sandbox.restore();
     });
 
-    test("getFilterOperatorEnum should map correctly from string to enum", () => {
+    test("should initialize correctly for table edit", async () => {
         assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorEnum(strings.contains),
-            NodeFilterOperator.Contains,
+            (controller as any)._state.apiState.initializeState,
+            td.LoadState.Loaded,
+            "Initialize state should be loaded",
         );
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorEnum(strings.notContains),
-            NodeFilterOperator.NotContains,
-        );
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorEnum(strings.endsWith),
-            NodeFilterOperator.EndsWith,
-        );
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorEnum(strings.equals),
-            NodeFilterOperator.Equals,
-        );
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorEnum(strings.greaterThan),
-            NodeFilterOperator.GreaterThan,
-        );
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorEnum(strings.greaterThanOrEquals),
-            NodeFilterOperator.GreaterThanOrEquals,
-        );
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorEnum(strings.lessThan),
-            NodeFilterOperator.LessThan,
-        );
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorEnum(strings.lessThanOrEquals),
-            NodeFilterOperator.LessThanOrEquals,
-        );
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorEnum(strings.notBetween),
-            NodeFilterOperator.NotBetween,
-        );
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorEnum(strings.notEndsWith),
-            NodeFilterOperator.NotEndsWith,
-        );
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorEnum(strings.notEquals),
-            NodeFilterOperator.NotEquals,
-        );
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorEnum(strings.notStartsWith),
-            NodeFilterOperator.NotStartsWith,
-        );
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorEnum(strings.startsWith),
-            NodeFilterOperator.StartsWith,
-        );
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorEnum(strings.nonexistent),
-            NodeFilterOperator.Equals, // default case
+        assert.deepStrictEqual(
+            (controller as any)._state.tableInfo.database,
+            "master",
+            "Table Info should be loaded",
         );
     });
 
-    test("getFilterOperatorString should map correctly from enum to string", () => {
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorString(NodeFilterOperator.Contains),
-            strings.contains,
-        );
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorString(NodeFilterOperator.NotContains),
-            strings.notContains,
-        );
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorString(NodeFilterOperator.EndsWith),
-            strings.endsWith,
-        );
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorString(NodeFilterOperator.Equals),
-            strings.equals,
-        );
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorString(NodeFilterOperator.GreaterThan),
-            strings.greaterThan,
-        );
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorString(
-                NodeFilterOperator.GreaterThanOrEquals,
-            ),
-            strings.greaterThanOrEquals,
-        );
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorString(NodeFilterOperator.LessThan),
-            strings.lessThan,
-        );
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorString(NodeFilterOperator.LessThanOrEquals),
-            strings.lessThanOrEquals,
-        );
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorString(NodeFilterOperator.NotBetween),
-            strings.notBetween,
-        );
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorString(NodeFilterOperator.NotEndsWith),
-            strings.notEndsWith,
-        );
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorString(NodeFilterOperator.NotEquals),
-            strings.notEquals,
-        );
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorString(NodeFilterOperator.NotStartsWith),
-            strings.notStartsWith,
-        );
-        assert.strictEqual(
-            ObjectExplorerFilterUtils.getFilterOperatorString(NodeFilterOperator.StartsWith),
-            strings.startsWith,
-        );
-        assert.strictEqual(ObjectExplorerFilterUtils.getFilterOperatorString(undefined), undefined);
-    });
+    test("should call processTableEdit in processTableEdit reducer", async () => {
+        let editResponse = {
+            issues: [],
+            view: {},
+            viewModel: {},
+            isValid: true,
+        };
 
-    test("getFilterOperators returns correct operators based on property type", () => {
-        let result = ObjectExplorerFilterUtils.getFilterOperators({
-            type: NodeFilterPropertyDataType.String,
-        } as any);
-        assert.ok(result.includes(strings.contains));
-        result = ObjectExplorerFilterUtils.getFilterOperators({
-            type: NodeFilterPropertyDataType.Number,
-        } as any);
-        assert.ok(result.includes(strings.between));
-        result = ObjectExplorerFilterUtils.getFilterOperators({
-            type: NodeFilterPropertyDataType.Date,
-        } as any);
-        assert.ok(result.includes(strings.between));
-        result = ObjectExplorerFilterUtils.getFilterOperators({
-            type: NodeFilterPropertyDataType.Boolean,
-        } as any);
-        assert.ok(result.includes(strings.equals));
-        result = ObjectExplorerFilterUtils.getFilterOperators({
-            type: NodeFilterPropertyDataType.Choice,
-        } as any);
-        assert.ok(result.includes(strings.equals));
-    });
+        // First scenario: no issues, view is defined
+        let processTableEditStub = (
+            mockTableDesignerService.processTableEdit as sinon.SinonStub
+        ).resolves(editResponse);
 
-    test("getFilters should convert string filters properly", () => {
-        const filters = ObjectExplorerFilterUtils.getFilters([
-            {
-                type: NodeFilterPropertyDataType.String,
-                name: "test",
-                selectedOperator: strings.equals,
-                value: "abc",
+        const mockPayload = {
+            table: mockResult.tableInfo,
+            tableChangeInfo: {
+                type: treeNode.object.nodeType,
+                source: treeNode.object.nodePath,
             },
-        ] as any);
+        };
 
-        assert.deepStrictEqual(filters[0].name, "test");
-        assert.deepStrictEqual(filters[0].value, "abc");
-        assert.deepStrictEqual(filters[0].operator, NodeFilterOperator.Equals);
-    });
+        const callState = (controller as any)._state;
 
-    test("getFilters should filter out empty BETWEEN values", () => {
-        const filters = ObjectExplorerFilterUtils.getFilters([
-            {
-                type: NodeFilterPropertyDataType.Number,
-                name: "range",
-                selectedOperator: strings.between,
-                value: ["1", "2"],
-            },
-        ] as any);
-        assert.deepStrictEqual(filters, [{ ...filters[0], value: [1, 2] }]);
-    });
+        let result = await controller["_reducers"]["processTableEdit"](callState, mockPayload);
 
-    test("getErrorTextFromFilters returns correct error if first BETWEEN value is empty", () => {
-        const filters = [
-            {
-                name: "range",
-                operator: NodeFilterOperator.Between,
-                value: ["", 10],
-            },
-        ] as any;
-
-        const err = ObjectExplorerFilterUtils.getErrorTextFromFilters(
-            filters,
-            firstValueEmptyError,
-            secondValueEmptyError,
-            firstValueLessThanSecondError,
+        assert.ok(processTableEditStub.calledOnce, "processTableEdit should be called once");
+        assert.deepStrictEqual(
+            processTableEditStub.firstCall.args,
+            [mockPayload.table, mockPayload.tableChangeInfo],
+            "processTableEdit should be called with correct arguments",
         );
-        const opString = ObjectExplorerFilterUtils.getFilterOperatorString(filters.operator);
-        assert.ok(err.includes("range") || err.includes(opString));
+        assert.deepStrictEqual(
+            result.tabStates.resultPaneTab,
+            td.DesignerResultPaneTabs.Script,
+            "State tab should be set to Script",
+        );
+
+        processTableEditStub.restore();
+
+        editResponse = {
+            issues: ["issue1", "issue2"],
+            view: undefined,
+            viewModel: {},
+            isValid: false,
+        };
+
+        const secondStub = sinon
+            .stub(mockTableDesignerService, "processTableEdit")
+            .resolves(editResponse as any);
+
+        result = await controller["_reducers"]["processTableEdit"](callState, mockPayload);
+
+        assert.ok(secondStub.calledOnce, "processTableEdit should be called again");
+        assert.deepStrictEqual(
+            secondStub.firstCall.args,
+            [mockPayload.table, mockPayload.tableChangeInfo],
+            "Second call should use correct arguments",
+        );
+        assert.deepStrictEqual(
+            result.tabStates.resultPaneTab,
+            td.DesignerResultPaneTabs.Issues,
+            "Tab should be set to Issues when there are issues",
+        );
+        assert.deepStrictEqual(
+            result.view,
+            callState.view,
+            "Should retain previous view when editResponse.view is undefined",
+        );
+
+        secondStub.restore(); // Cleanup
+        const errorMessage = "error message";
+        sinon.stub(mockTableDesignerService, "processTableEdit").rejects(new Error(errorMessage));
+        const errorStub = sinon.stub(vscode.window, "showErrorMessage");
+
+        result = await controller["_reducers"]["processTableEdit"](callState, mockPayload);
+
+        assert.deepStrictEqual(
+            errorStub.firstCall.args,
+            [errorMessage],
+            "Error message call should use correct arguments",
+        );
     });
 
-    test("getErrorTextFromFilters returns correct error if second BETWEEN value is empty", () => {
-        const filters = [
-            {
-                name: "range",
-                operator: NodeFilterOperator.Between,
-                value: [10, ""],
-            },
-        ] as any;
+    test("should call publishTable in publishTable reducer", async () => {
+        let publishResponse = {
+            issues: [],
+            view: {},
+            viewModel: {},
+            newTableInfo: { ...mockResult.tableInfo, title: "NewTable" },
+        };
 
-        const err = ObjectExplorerFilterUtils.getErrorTextFromFilters(
-            filters,
-            firstValueEmptyError,
-            secondValueEmptyError,
-            firstValueLessThanSecondError,
+        // First scenario: no issues, view is defined
+        let publishChangesStub = (
+            mockTableDesignerService.publishChanges as sinon.SinonStub
+        ).resolves(publishResponse);
+
+        const mockPayload = {
+            table: mockResult.tableInfo,
+        };
+
+        const callState = (controller as any)._state;
+
+        let result = await controller["_reducers"]["publishChanges"](callState, mockPayload);
+
+        assert.ok(publishChangesStub.calledOnce, "publishChanges should be called once");
+        assert.deepStrictEqual(
+            publishChangesStub.firstCall.args,
+            [mockPayload.table],
+            "publishChanges should be called with correct arguments",
         );
-        const opString = ObjectExplorerFilterUtils.getFilterOperatorString(filters.operator);
-        assert.ok(err.includes("range") || err.includes(opString));
-    });
-
-    test("getErrorTextFromFilters returns correct error if first > second in BETWEEN", () => {
-        const filters = [
-            {
-                name: "range",
-                operator: NodeFilterOperator.Between,
-                value: [20, 10],
-            },
-        ] as any;
-
-        const err = ObjectExplorerFilterUtils.getErrorTextFromFilters(
-            filters,
-            firstValueEmptyError,
-            secondValueEmptyError,
-            firstValueLessThanSecondError,
+        assert.deepStrictEqual(
+            result.apiState.publishState,
+            td.LoadState.Loaded,
+            "Publish State should be loaded",
         );
-        const opString = ObjectExplorerFilterUtils.getFilterOperatorString(filters.operator);
-        assert.ok(err.includes("range") || err.includes(opString));
+
+        assert.deepStrictEqual(
+            result.apiState.previewState,
+            td.LoadState.NotStarted,
+            "Preview State should be not started",
+        );
+
+        assert.strictEqual(
+            controller.panel.title,
+            publishResponse.newTableInfo.title,
+            "Panel title should be table name",
+        );
+
+        publishChangesStub.restore();
+
+        const errorMessage = "error message";
+        sinon.stub(mockTableDesignerService, "publishChanges").rejects(new Error(errorMessage));
+
+        result = await controller["_reducers"]["publishChanges"](callState, mockPayload);
+
+        assert.deepStrictEqual(
+            result.publishingError,
+            `Error: ${errorMessage}`,
+            "State should contain error message",
+        );
+
+        assert.deepStrictEqual(
+            result.apiState.publishState,
+            td.LoadState.Error,
+            "State should contain correct status",
+        );
     });
 });
