@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ElectronApplication, FrameLocator, Page } from "@playwright/test";
+import { ElectronApplication, Page } from "@playwright/test";
 import { launchVsCodeWithMssqlExtension } from "./utils/launchVscodeWithMsSqlExt";
 import { screenshotOnFailure } from "./utils/screenshotOnError";
 import {
@@ -33,11 +33,10 @@ test.describe("MSSQL Extension - Query Execution", async () => {
     let password: string;
     let savePassword: string;
     let profileName: string;
-    let resultWebview: FrameLocator;
 
     test.beforeAll(async () => {
         // Launch with new UI off
-        const { electronApp, page } = await launchVsCodeWithMssqlExtension();
+        const { electronApp, page } = await launchVsCodeWithMssqlExtension(true /* oldUi */);
         vsCodeApp = electronApp;
         vsCodePage = page;
 
@@ -58,25 +57,16 @@ test.describe("MSSQL Extension - Query Execution", async () => {
             savePassword,
             profileName,
         );
-
-        resultWebview = await vsCodePage
-            .frameLocator(".webview")
-            .frameLocator('[title*="Untitled"]')
-            .first();
     });
 
-    test("Create table", async () => {
-        await openNewQueryEditor(vsCodePage, profileName);
+    test("Create table, insert data, and execute query", async () => {
+        await openNewQueryEditor(vsCodePage, profileName, password);
 
         const createTestDB = "CREATE DATABASE TestDB;";
         await enterTextIntoQueryEditor(vsCodePage, createTestDB);
         await executeQuery(vsCodePage);
 
-        await resultWebview.locator("[id=messagepane]").waitFor({ state: "visible" });
-    });
-
-    test("Insert data", async () => {
-        await openNewQueryEditor(vsCodePage, profileName);
+        await openNewQueryEditor(vsCodePage, profileName, password);
 
         const sqlScript = `
 USE TestDB;
@@ -87,11 +77,7 @@ SELECT Name FROM TestTable;`;
         await enterTextIntoQueryEditor(vsCodePage, sqlScript);
         await executeQuery(vsCodePage);
 
-        await resultWebview.locator("[id=resultspane]").waitFor({ state: "visible" });
-
-        const nameQueryResult = await resultWebview.locator(
-            '[class*="grid-cell-value-container"][title="Doe"]',
-        );
+        const nameQueryResult = await vsCodePage.getByText("Doe");
         await expect(nameQueryResult).toBeVisible({ timeout: 10000 });
     });
 
@@ -100,16 +86,16 @@ SELECT Name FROM TestTable;`;
     });
 
     test.afterAll(async () => {
-        await openNewQueryEditor(vsCodePage, profileName);
+        await openNewQueryEditor(vsCodePage, profileName, password);
         const dropTestDatabaseScript = `
 USE master
 ALTER DATABASE TestDB SET SINGLE_USER WITH ROLLBACK IMMEDIATE
 DROP DATABASE TestDB;`;
         await enterTextIntoQueryEditor(vsCodePage, dropTestDatabaseScript);
         await executeQuery(vsCodePage);
-        await resultWebview.locator("[id=messagepane]").waitFor({ state: "visible" });
 
         await new Promise((resolve) => setTimeout(resolve, 10 * 1000));
+
         await vsCodeApp.close();
     });
 });

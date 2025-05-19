@@ -640,7 +640,7 @@ export default class MainController implements vscode.Disposable {
 
         await vscode.window.withProgress(
             {
-                location: vscode.ProgressLocation.Window,
+                location: vscode.ProgressLocation.Notification,
                 title: LocalizedConstants.ObjectExplorer.FetchingScriptLabel(operationType),
             },
             async () => {
@@ -2359,6 +2359,8 @@ export default class MainController implements vscode.Disposable {
             );
 
             executionPlanController.revealToForeground();
+
+            sendActionEvent(TelemetryViews.ExecutionPlan, TelemetryActions.Open);
         }
     };
 }

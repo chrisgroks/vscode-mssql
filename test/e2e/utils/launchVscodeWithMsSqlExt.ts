@@ -9,7 +9,7 @@ import * as path from "path";
 import { ElectronApplication, Page } from "@playwright/test";
 import { getVsCodeVersionName } from "./envConfigReader";
 
-export async function launchVsCodeWithMssqlExtension(): Promise<{
+export async function launchVsCodeWithMssqlExtension(oldUi?: boolean): Promise<{
     electronApp: ElectronApplication;
     page: Page;
 }> {
@@ -18,7 +18,9 @@ export async function launchVsCodeWithMssqlExtension(): Promise<{
 
     const mssqlExtensionPath = path.resolve(__dirname, "../../../");
 
-    const settingsOption = `--user-data-dir=${path.join(process.cwd(), "test", "resources", "launchDir")}`;
+    const settingsOption = oldUi
+        ? `--user-data-dir=${path.join(process.cwd(), "test", "resources", "launchDir")}`
+        : "";
 
     const electronApp = await electron.launch({
         executablePath: vsCodeExecutablePath,
