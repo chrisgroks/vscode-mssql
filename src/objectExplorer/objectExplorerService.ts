@@ -24,9 +24,10 @@ import {
     CloseSessionParams,
     CloseSessionResponse,
 } from "../models/contracts/objectExplorer/closeSessionRequest";
-import { TreeNodeInfo } from "./nodes/treeNodeInfo";
+import { ConnectableTreeNodeInfo, TreeNodeInfo } from "./nodes/treeNodeInfo";
 import {
     AuthenticationTypes,
+    IConnectionGroup,
     IConnectionProfile,
     IConnectionProfileWithSource,
 } from "../models/interfaces";
@@ -60,6 +61,7 @@ import VscodeWrapper from "../controllers/vscodeWrapper";
 import { ExpandErrorNode } from "./nodes/expandErrorNode";
 import { NoItemsNode } from "./nodes/noItemNode";
 import { ConnectionNode } from "./nodes/connectionNode";
+import { ConnectionConfig } from "../connectionconfig/connectionconfig";
 
 export interface CreateSessionResult {
     sessionId?: string;
@@ -97,7 +99,7 @@ export class ObjectExplorerService {
     constructor(
         private _vscodeWrapper: VscodeWrapper,
         private _connectionManager: ConnectionManager,
-        private _refreshCallback: (node: TreeNodeInfo) => void,
+        private _refreshCallback: (node: ConnectableTreeNodeInfo) => void,
     ) {
         if (!_vscodeWrapper) {
             this._vscodeWrapper = new VscodeWrapper();
@@ -189,7 +191,7 @@ export class ObjectExplorerService {
      * @returns A boolean indicating whether the expansion was successful
      */
     public async expandNode(
-        node: TreeNodeInfo,
+        node: ConnectableTreeNodeInfo,
         sessionId: string,
         promise: Deferred<vscode.TreeItem[]>,
     ): Promise<boolean | undefined> {
@@ -244,7 +246,7 @@ export class ObjectExplorerService {
                     );
                     // successfully received children from SQL Tools Service
                     const children = result.nodes.map((n) =>
-                        TreeNodeInfo.fromNodeInfo(
+                        ConnectableTreeNodeInfo.fromNodeInfo(
                             n,
                             result.sessionId,
                             node,
@@ -302,11 +304,11 @@ export class ObjectExplorerService {
     }
 
     /**
-     * Sort the array based on server names
+     * Sort the array based on node labels
      * Public only for testing purposes
      * @param array array that needs to be sorted
      */
-    public sortByServerName(array: TreeNodeInfo[]): TreeNodeInfo[] {
+    public sortByNodeLabel(array: TreeNodeInfo[]): TreeNodeInfo[] {
         const sortedNodeArray = array.sort((a, b) => {
             const labelA = typeof a.label === "string" ? a.label : a.label.label;
             const labelB = typeof b.label === "string" ? b.label : b.label.label;
@@ -318,8 +320,8 @@ export class ObjectExplorerService {
     /**
      * Get nodes from saved connections
      */
-    private async getSavedConnectionNodes(): Promise<TreeNodeInfo[]> {
-        const result: TreeNodeInfo[] = [];
+    private async getSavedConnectionNodes(): Promise<ConnectableTreeNodeInfo[]> {
+        const result: ConnectableTreeNodeInfo[] = [];
 
         let savedConnections = await this._connectionManager.connectionStore.readAllConnections();
         // Remove any connections that have duplicated IDs
@@ -356,19 +358,47 @@ export class ObjectExplorerService {
      * Handles a generic OE create session failure by creating a
      * sign in node
      */
-    private createSignInNode(element: TreeNodeInfo): AccountSignInTreeNode[] {
+    private createSignInNode(element: ConnectableTreeNodeInfo): AccountSignInTreeNode[] {
         const signInNode = new AccountSignInTreeNode(element);
         this._treeNodeToChildrenMap.set(element, [signInNode]);
         return [signInNode];
     }
 
     // Main method that routes to the appropriate handler
-    public async getChildren(element?: TreeNodeInfo): Promise<vscode.TreeItem[]> {
+    public async getChildren(element?: ConnectableTreeNodeInfo): Promise<vscode.TreeItem[]> {
         if (element) {
             return this.getNodeChildren(element);
         } else {
             return this.getRootNodes();
         }
+    }
+
+    private async constructConnectionGroupTree(): Promise<{
+        rootNode: IConnectionGroup;
+        groupMap: Map<string, IConnectionGroup[]>;
+    }> {
+        let rootNode: IConnectionGroup;
+
+        const groups = await this._connectionManager.connectionStore.readConnectionGroups();
+        const groupMap: Map<string, IConnectionGroup[]> = new Map();
+
+        for (const group of groups) {
+            if (group.groupId === undefined && group.name === ConnectionConfig.RootGroupName) {
+                rootNode = group;
+                continue;
+            }
+
+            if (!groupMap.has(group.groupId)) {
+                groupMap.set(group.groupId, []);
+            }
+
+            groupMap.get(group.groupId).push(group);
+        }
+
+        return {
+            rootNode,
+            groupMap,
+        };
     }
 
     /**
@@ -384,7 +414,20 @@ export class ObjectExplorerService {
                 nodeType: "root",
             },
         );
+
+        const { rootNode, groupMap } = await this.constructConnectionGroupTree();
+
+        const topLevelNodes = groupMap.get(rootNode.id);
+
+        for (const topLevelGroup of topLevelNodes) {
+            console.log(`Top level group: ${topLevelGroup.name}`);
+        }
+
+        //this._treeNodeToChildrenMap.set();
+
         let savedConnections = await this._connectionManager.connectionStore.readAllConnections();
+
+        // TODO: replace rootTreeNodeArray with a tree structure
 
         // if there are no saved connections, show the add connection node
         if (savedConnections.length === 0) {
@@ -398,12 +441,12 @@ export class ObjectExplorerService {
         let result: TreeNodeInfo[] = [];
         if (this._rootTreeNodeArray) {
             this._logger.verbose("Using cached root tree node array.");
-            result = this.sortByServerName(this._rootTreeNodeArray);
+            result = this.sortByNodeLabel(this._rootTreeNodeArray);
         } else {
             this._logger.verbose("Reading saved connections from connection store.");
             this._rootTreeNodeArray = await this.getSavedConnectionNodes();
             this._logger.verbose(`Found ${this._rootTreeNodeArray.length} saved connections.`);
-            result = this.sortByServerName(this._rootTreeNodeArray);
+            result = this.sortByNodeLabel(this._rootTreeNodeArray);
         }
         getConnectionActivity.end(ActivityStatus.Succeeded, undefined, {
             nodeCount: result.length,
@@ -416,7 +459,7 @@ export class ObjectExplorerService {
      * @param element The node to get children for
      * @returns The children of the node
      */
-    private async getNodeChildren(element: TreeNodeInfo): Promise<vscode.TreeItem[]> {
+    private async getNodeChildren(element: ConnectableTreeNodeInfo): Promise<vscode.TreeItem[]> {
         if (element.shouldRefresh) {
             this.cleanNodeChildren(element);
         } else {
@@ -447,7 +490,9 @@ export class ObjectExplorerService {
      * @param element The node to get or create children for
      * @returns The children of the node
      */
-    private async getOrCreateNodeChildrenWithSession(element: TreeNodeInfo): Promise<void> {
+    private async getOrCreateNodeChildrenWithSession(
+        element: ConnectableTreeNodeInfo,
+    ): Promise<void> {
         if (element.sessionId) {
             await this.expandExistingNode(element);
         } else {
@@ -461,8 +506,8 @@ export class ObjectExplorerService {
      * @param element The node to expand
      * @returns The children of the node
      */
-    private async expandExistingNode(element: TreeNodeInfo): Promise<vscode.TreeItem[]> {
-        const promise = new Deferred<TreeNodeInfo[]>();
+    private async expandExistingNode(element: ConnectableTreeNodeInfo): Promise<vscode.TreeItem[]> {
+        const promise = new Deferred<ConnectableTreeNodeInfo[]>();
         await this.expandNode(element, element.sessionId, promise);
         const children = await promise;
 
@@ -486,7 +531,9 @@ export class ObjectExplorerService {
      * @param element The node to create a session for and expand
      * @returns The children of the node
      */
-    private async createSessionAndExpandNode(element: TreeNodeInfo): Promise<vscode.TreeItem[]> {
+    private async createSessionAndExpandNode(
+        element: ConnectableTreeNodeInfo,
+    ): Promise<vscode.TreeItem[]> {
         const sessionResult = await this.createSession(element.connectionProfile);
 
         if (sessionResult?.shouldRetryOnFailure) {
@@ -1027,7 +1074,7 @@ export class ObjectExplorerService {
      * Sends a close session request
      * @param node The node to close the session for
      */
-    public async closeSession(node: TreeNodeInfo): Promise<void> {
+    public async closeSession(node: ConnectableTreeNodeInfo): Promise<void> {
         if (!node.sessionId) {
             return;
         }
@@ -1059,7 +1106,7 @@ export class ObjectExplorerService {
      * @returns The unique identifier for the node.
      * If the node does not have a session ID, it will return the node URI.
      */
-    private getNodeIdentifier(node: TreeNodeInfo): string {
+    private getNodeIdentifier(node: ConnectableTreeNodeInfo): string {
         if (node.sessionId) {
             return node.sessionId;
         } else {

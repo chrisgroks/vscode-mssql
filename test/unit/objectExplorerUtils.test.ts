@@ -7,7 +7,7 @@ import * as path from "path";
 import { ObjectExplorerUtils } from "../../src/objectExplorer/objectExplorerUtils";
 import { expect, assert } from "chai";
 import * as Constants from "../../src/constants/constants";
-import { TreeNodeInfo } from "../../src/objectExplorer/nodes/treeNodeInfo";
+import { ConnectableTreeNodeInfo } from "../../src/objectExplorer/nodes/treeNodeInfo";
 import { ConnectionProfile } from "../../src/models/connectionProfile";
 import { ObjectMetadata, MetadataType } from "vscode-mssql";
 import * as vscode from "vscode";
@@ -46,7 +46,7 @@ suite("Object Explorer Utils Tests", () => {
         testProfile.database = "test_database";
         testProfile.user = "test_user";
         testProfile.authenticationType = Constants.sqlAuthentication;
-        const disconnectedTestNode = new TreeNodeInfo(
+        const disconnectedTestNode = new ConnectableTreeNodeInfo(
             "disconnectedTest",
             undefined,
             undefined,
@@ -59,7 +59,7 @@ suite("Object Explorer Utils Tests", () => {
             undefined,
             undefined,
         );
-        const serverTestNode = new TreeNodeInfo(
+        const serverTestNode = new ConnectableTreeNodeInfo(
             "serverTest",
             undefined,
             undefined,
@@ -72,7 +72,7 @@ suite("Object Explorer Utils Tests", () => {
             undefined,
             undefined,
         );
-        const databaseTestNode = new TreeNodeInfo(
+        const databaseTestNode = new ConnectableTreeNodeInfo(
             "databaseTest",
             undefined,
             undefined,
@@ -85,7 +85,7 @@ suite("Object Explorer Utils Tests", () => {
             undefined,
             undefined,
         );
-        const tableTestNode = new TreeNodeInfo(
+        const tableTestNode = new ConnectableTreeNodeInfo(
             "tableTest",
             undefined,
             undefined,
@@ -140,7 +140,7 @@ suite("Object Explorer Utils Tests", () => {
 
     test("should return empty string if profile is undefined", () => {
         // Setup
-        const treeNode = new TreeNodeInfo(
+        const treeNode = new ConnectableTreeNodeInfo(
             "label",
             { type: "type", subType: "", filterable: false, hasFilters: false },
             vscode.TreeItemCollapsibleState.None,
@@ -171,7 +171,7 @@ suite("Object Explorer Utils Tests", () => {
             profileName: "testProfile",
             id: "id",
         } as IConnectionProfile;
-        const treeNode = new TreeNodeInfo(
+        const treeNode = new ConnectableTreeNodeInfo(
             "label",
             { type: "type", subType: "", filterable: false, hasFilters: false },
             vscode.TreeItemCollapsibleState.None,
@@ -209,7 +209,7 @@ suite("Object Explorer Utils Tests", () => {
             id: "id",
         } as IConnectionProfile;
 
-        const parentNode = new TreeNodeInfo(
+        const parentNode = new ConnectableTreeNodeInfo(
             "parent",
             { type: "parentType", subType: "", filterable: false, hasFilters: false },
             vscode.TreeItemCollapsibleState.None,
@@ -300,7 +300,7 @@ suite("Object Explorer Utils Tests", () => {
         testProfile.profileName = "test_profile";
         testProfile.database = "test_database";
         testProfile.user = "test_user";
-        const serverTestNode = new TreeNodeInfo(
+        const serverTestNode = new ConnectableTreeNodeInfo(
             "serverTest",
             undefined,
             undefined,
@@ -320,7 +320,7 @@ suite("Object Explorer Utils Tests", () => {
             name: "databaseTest",
             schema: undefined,
         };
-        const databaseTestNode = new TreeNodeInfo(
+        const databaseTestNode = new ConnectableTreeNodeInfo(
             "databaseTest",
             undefined,
             undefined,
@@ -334,7 +334,7 @@ suite("Object Explorer Utils Tests", () => {
             undefined,
             databaseMetatadata,
         );
-        const databaseTestNode2 = new TreeNodeInfo(
+        const databaseTestNode2 = new ConnectableTreeNodeInfo(
             "databaseTest",
             undefined,
             undefined,
@@ -347,7 +347,7 @@ suite("Object Explorer Utils Tests", () => {
             undefined,
             undefined,
         );
-        const tableTestNode = new TreeNodeInfo(
+        const tableTestNode = new ConnectableTreeNodeInfo(
             "tableTest",
             undefined,
             undefined,
@@ -389,7 +389,7 @@ suite("Object Explorer Utils Tests", () => {
     suite("getQualifiedName Tests", () => {
         test("should return properly formatted qualified name for Table", () => {
             // Setup
-            const node = new TreeNodeInfo(
+            const node = new ConnectableTreeNodeInfo(
                 "CustomersTable",
                 { type: "Table", subType: "", filterable: false, hasFilters: false },
                 vscode.TreeItemCollapsibleState.None,
@@ -419,7 +419,7 @@ suite("Object Explorer Utils Tests", () => {
 
         test("should return properly formatted qualified name for StoredProcedure", () => {
             // Setup
-            const node = new TreeNodeInfo(
+            const node = new ConnectableTreeNodeInfo(
                 "GetCustomersProc",
                 { type: "StoredProcedure", subType: "", filterable: false, hasFilters: false },
                 vscode.TreeItemCollapsibleState.None,
@@ -449,7 +449,7 @@ suite("Object Explorer Utils Tests", () => {
 
         test("should return properly formatted qualified name for View", () => {
             // Setup
-            const node = new TreeNodeInfo(
+            const node = new ConnectableTreeNodeInfo(
                 "ActiveCustomersView",
                 { type: "View", subType: "", filterable: false, hasFilters: false },
                 vscode.TreeItemCollapsibleState.None,
@@ -479,7 +479,7 @@ suite("Object Explorer Utils Tests", () => {
 
         test("should return properly formatted qualified name for UserDefinedFunction", () => {
             // Setup
-            const node = new TreeNodeInfo(
+            const node = new ConnectableTreeNodeInfo(
                 "CalculateDiscountFunction",
                 { type: "UserDefinedFunction", subType: "", filterable: false, hasFilters: false },
                 vscode.TreeItemCollapsibleState.None,
@@ -509,7 +509,7 @@ suite("Object Explorer Utils Tests", () => {
 
         test("should return name with brackets for other metadata types", () => {
             // Setup
-            const node = new TreeNodeInfo(
+            const node = new ConnectableTreeNodeInfo(
                 "master",
                 { type: "Database", subType: "", filterable: false, hasFilters: false },
                 vscode.TreeItemCollapsibleState.None,
@@ -538,7 +538,7 @@ suite("Object Explorer Utils Tests", () => {
 
         test("should return empty string if node has no metadata", () => {
             // Setup
-            const node = new TreeNodeInfo(
+            const node = new ConnectableTreeNodeInfo(
                 "label",
                 { type: "type", subType: "", filterable: false, hasFilters: false },
                 vscode.TreeItemCollapsibleState.None,

@@ -10,7 +10,7 @@ import { ReactWebviewPanelController } from "../controllers/reactWebviewPanelCon
 import * as designer from "../sharedInterfaces/tableDesigner";
 import UntitledSqlDocumentService from "../controllers/untitledSqlDocumentService";
 import { getDesignerView } from "./tableDesignerTabDefinition";
-import { TreeNodeInfo } from "../objectExplorer/nodes/treeNodeInfo";
+import { ConnectableTreeNodeInfo } from "../objectExplorer/nodes/treeNodeInfo";
 import { sendActionEvent, sendErrorEvent, startActivity } from "../telemetry/telemetry";
 import { ActivityStatus, TelemetryActions, TelemetryViews } from "../sharedInterfaces/telemetry";
 import { copied, scriptCopiedToClipboard } from "../constants/locConstants";
@@ -32,9 +32,9 @@ export class TableDesignerWebviewController extends ReactWebviewPanelController<
         private _tableDesignerService: designer.ITableDesignerService,
         private _connectionManager: ConnectionManager,
         private _untitledSqlDocumentService: UntitledSqlDocumentService,
-        private _targetNode?: TreeNodeInfo,
+        private _targetNode?: ConnectableTreeNodeInfo,
         private _objectExplorerProvider?: ObjectExplorerProvider,
-        private _objectExplorerTree?: vscode.TreeView<TreeNodeInfo>,
+        private _objectExplorerTree?: vscode.TreeView<ConnectableTreeNodeInfo>,
     ) {
         super(
             context,
@@ -218,12 +218,12 @@ export class TableDesignerWebviewController extends ReactWebviewPanelController<
         this.registerRpcHandlers();
     }
 
-    private getDatabaseNameForNode(node: TreeNodeInfo): string {
+    private getDatabaseNameForNode(node: ConnectableTreeNodeInfo): string {
         if (node.metadata?.metadataTypeName === "Database") {
             return node.metadata.name;
         } else {
             if (node.parentNode) {
-                return this.getDatabaseNameForNode(node.parentNode);
+                return this.getDatabaseNameForNode(node.parentNode as ConnectableTreeNodeInfo);
             }
         }
         return "";
@@ -334,7 +334,7 @@ export class TableDesignerWebviewController extends ReactWebviewPanelController<
             let targetNode = this._targetNode;
             // In case of table edit, we need to refresh the tables folder to get the new updated table
             if (this._targetNode.context.subType !== "Tables") {
-                targetNode = this._targetNode.parentNode; // Setting the target node to the parent node to refresh the tables folder
+                targetNode = this._targetNode.parentNode as ConnectableTreeNodeInfo; // Setting the target node to the parent node to refresh the tables folder
             }
             if (targetNode) {
                 await this._objectExplorerTree.reveal(targetNode, {

@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as path from "path";
-import { TreeNodeInfo } from "./nodes/treeNodeInfo";
+import { ConnectableTreeNodeInfo } from "./nodes/treeNodeInfo";
 import { IConnectionProfile } from "../models/interfaces";
 import * as Constants from "../constants/constants";
 import * as LocalizedConstants from "../constants/locConstants";
@@ -27,7 +27,7 @@ export class ObjectExplorerUtils {
 
     public static getNodeUri(node: TreeNodeType): string {
         let profile: IConnectionProfile;
-        if (node instanceof TreeNodeInfo) {
+        if (node instanceof ConnectableTreeNodeInfo) {
             profile = node.connectionProfile;
         } else {
             if (node.parentNode) {
@@ -90,7 +90,7 @@ export class ObjectExplorerUtils {
         return errorCode === Constants.errorFirewallRule;
     }
 
-    public static getQualifiedName(node: TreeNodeInfo): string {
+    public static getQualifiedName(node: ConnectableTreeNodeInfo): string {
         let objectString = "";
         if (node.metadata) {
             switch (node.metadata.metadataTypeName) {

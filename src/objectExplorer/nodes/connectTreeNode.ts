@@ -6,10 +6,10 @@
 import * as vscode from "vscode";
 import * as LocalizedConstants from "../../constants/locConstants";
 import * as Constants from "../../constants/constants";
-import { TreeNodeInfo } from "./treeNodeInfo";
+import { ConnectableTreeNodeInfo } from "./treeNodeInfo";
 
 export class ConnectTreeNode extends vscode.TreeItem {
-    constructor(private _parentNode: TreeNodeInfo) {
+    constructor(private _parentNode: ConnectableTreeNodeInfo) {
         super(LocalizedConstants.msgConnect, vscode.TreeItemCollapsibleState.None);
 
         this.command = {
@@ -19,9 +19,9 @@ export class ConnectTreeNode extends vscode.TreeItem {
         };
     }
 
-    public get parentNode(): TreeNodeInfo {
+    public get parentNode(): ConnectableTreeNodeInfo {
         return this._parentNode;
     }
 }
 
-export type TreeNodeType = TreeNodeInfo | ConnectTreeNode;
+export type TreeNodeType = ConnectableTreeNodeInfo | ConnectTreeNode;

@@ -10,7 +10,7 @@ import * as sinon from "sinon";
 import * as mssql from "vscode-mssql";
 
 import { SchemaCompareWebViewController } from "../../src/schemaCompare/schemaCompareWebViewController";
-import { TreeNodeInfo } from "../../src/objectExplorer/nodes/treeNodeInfo";
+import { ConnectableTreeNodeInfo } from "../../src/objectExplorer/nodes/treeNodeInfo";
 import ConnectionManager, { ConnectionInfo } from "../../src/controllers/connectionManager";
 import { SchemaCompareWebViewState } from "../../src/sharedInterfaces/schemaCompare";
 import * as scUtils from "../../src/schemaCompare/schemaCompareUtils";
@@ -22,7 +22,7 @@ suite("SchemaCompareWebViewController Tests", () => {
     let controller: SchemaCompareWebViewController;
     let sandbox: sinon.SinonSandbox;
     let mockContext: vscode.ExtensionContext;
-    let treeNode: TreeNodeInfo;
+    let treeNode: ConnectableTreeNodeInfo;
     let mockSchemaCompareService: TypeMoq.IMock<mssql.ISchemaCompareService>;
     let mockConnectionManager: TypeMoq.IMock<ConnectionManager>;
     let mockConnectionInfo: TypeMoq.IMock<ConnectionInfo>;
@@ -270,7 +270,7 @@ suite("SchemaCompareWebViewController Tests", () => {
             },
         };
 
-        treeNode = new TreeNodeInfo(
+        treeNode = new ConnectableTreeNodeInfo(
             "localhost,1433, <default> (sa)",
             context,
             vscode.TreeItemCollapsibleState.None,

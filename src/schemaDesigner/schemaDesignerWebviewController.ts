@@ -8,7 +8,7 @@ import { ReactWebviewPanelController } from "../controllers/reactWebviewPanelCon
 import { SchemaDesigner } from "../sharedInterfaces/schemaDesigner";
 import VscodeWrapper from "../controllers/vscodeWrapper";
 import * as LocConstants from "../constants/locConstants";
-import { TreeNodeInfo } from "../objectExplorer/nodes/treeNodeInfo";
+import { ConnectableTreeNodeInfo } from "../objectExplorer/nodes/treeNodeInfo";
 import MainController from "../controllers/mainController";
 
 export class SchemaDesignerWebviewController extends ReactWebviewPanelController<
@@ -27,7 +27,7 @@ export class SchemaDesignerWebviewController extends ReactWebviewPanelController
         private connectionString: string,
         private accessToken: string | undefined,
         private databaseName: string,
-        private treeNode: TreeNodeInfo,
+        private treeNode: ConnectableTreeNodeInfo,
         private schemaDesignerCache: Map<string, SchemaDesigner.SchemaDesignerCacheItem>,
     ) {
         super(

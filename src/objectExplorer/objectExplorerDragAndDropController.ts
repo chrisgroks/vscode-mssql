@@ -5,18 +5,18 @@
 
 import * as vscode from "vscode";
 
-import { TreeNodeInfo } from "./nodes/treeNodeInfo";
+import { ConnectableTreeNodeInfo } from "./nodes/treeNodeInfo";
 import { ObjectExplorerUtils } from "./objectExplorerUtils";
 
 export class ObjectExplorerDragAndDropController
-    implements vscode.TreeDragAndDropController<TreeNodeInfo>
+    implements vscode.TreeDragAndDropController<ConnectableTreeNodeInfo>
 {
     // Unique identifier for the drag-and-drop controller
     readonly dropMimeTypes = ["text/plain"];
     readonly dragMimeTypes = ["text/plain"];
 
     handleDrag(
-        source: TreeNodeInfo[],
+        source: ConnectableTreeNodeInfo[],
         dataTransfer: vscode.DataTransfer,
         token: vscode.CancellationToken,
     ): void {

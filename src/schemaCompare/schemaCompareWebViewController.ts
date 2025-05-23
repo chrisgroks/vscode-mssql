@@ -14,7 +14,7 @@ import {
     SchemaCompareReducers,
     SchemaCompareWebViewState,
 } from "../sharedInterfaces/schemaCompare";
-import { TreeNodeInfo } from "../objectExplorer/nodes/treeNodeInfo";
+import { ConnectableTreeNodeInfo } from "../objectExplorer/nodes/treeNodeInfo";
 import ConnectionManager from "../controllers/connectionManager";
 import { IConnectionProfile } from "../models/interfaces";
 import {
@@ -284,7 +284,7 @@ export class SchemaCompareWebViewController extends ReactWebviewPanelController<
     }
 
     private isTreeNodeInfoType(node: any): boolean {
-        if (node instanceof TreeNodeInfo) {
+        if (node instanceof ConnectableTreeNodeInfo) {
             return true;
         }
 

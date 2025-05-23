@@ -5,12 +5,12 @@
 
 import * as vscode from "vscode";
 import * as LocalizedConstants from "../../constants/locConstants";
-import { TreeNodeInfo } from "./treeNodeInfo";
+import { ConnectableTreeNodeInfo } from "./treeNodeInfo";
 import { ObjectExplorerUtils } from "../objectExplorerUtils";
 
 export class ExpandErrorNode extends vscode.TreeItem {
     constructor(
-        private _parentNode: TreeNodeInfo,
+        private _parentNode: ConnectableTreeNodeInfo,
         errorMessage: string,
     ) {
         super(
@@ -24,7 +24,7 @@ export class ExpandErrorNode extends vscode.TreeItem {
         };
     }
 
-    public get parentNode(): TreeNodeInfo {
+    public get parentNode(): ConnectableTreeNodeInfo {
         return this._parentNode;
     }
 }

@@ -13,7 +13,7 @@ import {
 import { TelemetryActions, TelemetryViews } from "../sharedInterfaces/telemetry";
 
 import { ReactWebviewPanelController } from "../controllers/reactWebviewPanelController";
-import { TreeNodeInfo } from "./nodes/treeNodeInfo";
+import { ConnectableTreeNodeInfo } from "./nodes/treeNodeInfo";
 import { randomUUID } from "crypto";
 import { sendActionEvent } from "../telemetry/telemetry";
 import VscodeWrapper from "../controllers/vscodeWrapper";
@@ -84,7 +84,7 @@ export class ObjectExplorerFilter {
     public static async getFilters(
         context: vscode.ExtensionContext,
         vscodeWrapper: VscodeWrapper,
-        treeNode: TreeNodeInfo,
+        treeNode: ConnectableTreeNodeInfo,
     ): Promise<vscodeMssql.NodeFilter[] | undefined> {
         return await new Promise((resolve, _reject) => {
             const correlationId = randomUUID();

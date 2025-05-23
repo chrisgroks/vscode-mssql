@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { TreeNodeInfo } from "./treeNodeInfo";
+import { ConnectableTreeNodeInfo } from "./treeNodeInfo";
 import * as vscode from "vscode";
 import * as vscodeMssql from "vscode-mssql";
 import { ConnectionProfile } from "../../models/connectionProfile";
@@ -31,7 +31,7 @@ const createDisconnectedNodeContextValue = (
     };
 };
 
-export class ConnectionNode extends TreeNodeInfo {
+export class ConnectionNode extends ConnectableTreeNodeInfo {
     constructor(connectionProfile: ConnectionProfile) {
         const displayName = ConnInfo.getConnectionDisplayName(connectionProfile);
         super(
@@ -64,7 +64,7 @@ export class ConnectionNode extends TreeNodeInfo {
     public updateToConnectedState(options: {
         nodeInfo: NodeInfo;
         sessionId: string;
-        parentNode: TreeNodeInfo;
+        parentNode: ConnectableTreeNodeInfo;
         connectionProfile: ConnectionProfile;
     }) {
         const { nodeInfo, sessionId, parentNode, connectionProfile } = options;

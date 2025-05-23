@@ -17,7 +17,7 @@ import { Logger } from "../../src/models/logger";
 import { ConnectionStore } from "../../src/models/connectionStore";
 import { IConnectionProfile, IConnectionProfileWithSource } from "../../src/models/interfaces";
 import { ConnectionNode } from "../../src/objectExplorer/nodes/connectionNode";
-import { TreeNodeInfo } from "../../src/objectExplorer/nodes/treeNodeInfo";
+import { ConnectableTreeNodeInfo } from "../../src/objectExplorer/nodes/treeNodeInfo";
 import { CloseSessionRequest } from "../../src/models/contracts/objectExplorer/closeSessionRequest";
 import { Deferred } from "../../src/protocol";
 import { ExpandRequest } from "../../src/models/contracts/objectExplorer/expandNodeRequest";
@@ -270,7 +270,7 @@ suite("OE Service Tests", () => {
             ];
 
             // Create mock root nodes
-            const mockRootNodes: TreeNodeInfo[] = [
+            const mockRootNodes: ConnectableTreeNodeInfo[] = [
                 new ConnectionNode(mockProfiles[0]),
                 new ConnectionNode(mockProfiles[1]),
             ];
@@ -340,7 +340,7 @@ suite("OE Service Tests", () => {
 
         test("expandNode should handle standard node expansion successfully", async () => {
             // Mock node and session ID
-            const mockNode = new TreeNodeInfo(
+            const mockNode = new ConnectableTreeNodeInfo(
                 "testNode",
                 {
                     type: "server",
@@ -478,7 +478,7 @@ suite("OE Service Tests", () => {
 
         test("expandNode should use RefreshRequest if node.shouldRefresh is true", async () => {
             // Mock node with shouldRefresh = true and session ID
-            const mockNode = new TreeNodeInfo(
+            const mockNode = new ConnectableTreeNodeInfo(
                 "testNode",
                 {
                     type: "server",
@@ -560,7 +560,7 @@ suite("OE Service Tests", () => {
 
         test("expandNode should handle error response from SQL Tools Service", async () => {
             // Mock node and session ID
-            const mockNode = new TreeNodeInfo(
+            const mockNode = new ConnectableTreeNodeInfo(
                 "testNode",
                 {
                     type: "server",
@@ -671,7 +671,7 @@ suite("OE Service Tests", () => {
 
         test("expandNode should handle null response from SQL Tools Service", async () => {
             // Mock node and session ID
-            const mockNode = new TreeNodeInfo(
+            const mockNode = new ConnectableTreeNodeInfo(
                 "testNode",
                 {
                     type: "server",
@@ -728,7 +728,7 @@ suite("OE Service Tests", () => {
 
         test("expandNode should handle false response from SQL Tools client", async () => {
             // Mock node and session ID
-            const mockNode = new TreeNodeInfo(
+            const mockNode = new ConnectableTreeNodeInfo(
                 "testNode",
                 {
                     type: "server",
@@ -781,7 +781,7 @@ suite("OE Service Tests", () => {
 
         test("expandNode should handle exception from SQL Tools client", async () => {
             // Mock node and session ID
-            const mockNode = new TreeNodeInfo(
+            const mockNode = new ConnectableTreeNodeInfo(
                 "testNode",
                 {
                     type: "server",
@@ -2457,7 +2457,7 @@ suite("OE Service Tests", () => {
                 id: "node1",
                 connectionProfile: undefined,
                 sessionId: "session1",
-            } as TreeNodeInfo;
+            } as ConnectableTreeNodeInfo;
 
             // Call the method
             const result = (objectExplorerService as any).getNodeIdentifier(mockNode);
@@ -3611,7 +3611,7 @@ suite("OE Service Tests", () => {
             ];
 
             // Create mock root nodes
-            const mockRootNodes: TreeNodeInfo[] = [
+            const mockRootNodes: ConnectableTreeNodeInfo[] = [
                 new ConnectionNode(mockProfiles[0]),
                 new ConnectionNode(mockProfiles[1]),
             ];
@@ -3668,7 +3668,7 @@ suite("OE Service Tests", () => {
                         authenticationType: "Integrated",
                     },
                     sessionId: "session1",
-                } as TreeNodeInfo,
+                } as ConnectableTreeNodeInfo,
             ];
 
             mockNode.sessionId = "session1";

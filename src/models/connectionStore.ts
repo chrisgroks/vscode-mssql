@@ -16,6 +16,7 @@ import {
     CredentialsQuickPickItemType,
     AuthenticationTypes,
     IConnectionProfileWithSource,
+    IConnectionGroup,
 } from "../models/interfaces";
 import { ICredentialStore } from "../credentialstore/icredentialstore";
 import { IConnectionConfig } from "../connectionconfig/iconnectionconfig";
@@ -547,6 +548,11 @@ export class ConnectionStore {
         let profile = connection as IConnectionProfile;
         profile.password = "";
         await this.saveProfile(profile);
+    }
+
+    public async readConnectionGroups(): Promise<IConnectionGroup[]> {
+        const connections = await this._connectionConfig.getConnectionGroups();
+        return connections;
     }
 
     public async readAllConnections(

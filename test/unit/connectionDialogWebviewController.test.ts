@@ -36,7 +36,7 @@ import {
     stubPromptForAzureSubscriptionFilter,
 } from "./azureHelperStubs";
 import { CreateSessionResponse } from "../../src/models/contracts/objectExplorer/createSessionRequest";
-import { TreeNodeInfo } from "../../src/objectExplorer/nodes/treeNodeInfo";
+import { ConnectableTreeNodeInfo } from "../../src/objectExplorer/nodes/treeNodeInfo";
 import { mockGetCapabilitiesRequest } from "./mocks";
 
 suite("ConnectionDialogWebviewController Tests", () => {
@@ -393,7 +393,7 @@ suite("ConnectionDialogWebviewController Tests", () => {
                     .returns(() => {
                         return Promise.resolve({
                             sessionId: "testSessionId",
-                            rootNode: new TreeNodeInfo(
+                            rootNode: new ConnectableTreeNodeInfo(
                                 "testNode",
                                 undefined,
                                 undefined,
@@ -414,10 +414,9 @@ suite("ConnectionDialogWebviewController Tests", () => {
                     .setup((cm) => cm.connectDialog(TypeMoq.It.isAny()))
                     .returns(() => Promise.resolve({} as ConnectionCompleteParams));
 
-                let mockObjectExplorerTree = TypeMoq.Mock.ofType<vscode.TreeView<TreeNodeInfo>>(
-                    undefined,
-                    TypeMoq.MockBehavior.Loose,
-                );
+                let mockObjectExplorerTree = TypeMoq.Mock.ofType<
+                    vscode.TreeView<ConnectableTreeNodeInfo>
+                >(undefined, TypeMoq.MockBehavior.Loose);
 
                 mockObjectExplorerTree
                     .setup((oet) => oet.reveal(TypeMoq.It.isAny(), TypeMoq.It.isAny()))

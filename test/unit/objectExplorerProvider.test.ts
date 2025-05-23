@@ -10,7 +10,7 @@ import { ObjectExplorerService } from "../../src/objectExplorer/objectExplorerSe
 import ConnectionManager from "../../src/controllers/connectionManager";
 import SqlToolsServiceClient from "../../src/languageservice/serviceclient";
 import { expect, assert } from "chai";
-import { TreeNodeInfo } from "../../src/objectExplorer/nodes/treeNodeInfo";
+import { ConnectableTreeNodeInfo } from "../../src/objectExplorer/nodes/treeNodeInfo";
 import { ConnectionCredentials } from "../../src/models/connectionCredentials";
 import { AddConnectionTreeNode } from "../../src/objectExplorer/nodes/addConnectionTreeNode";
 import * as LocalizedConstants from "../../src/constants/locConstants";
@@ -140,8 +140,14 @@ suite("Object Explorer Provider Tests", function () {
     });
 
     test("Test Get Children from Object Explorer Provider", (done) => {
-        const parentTreeNode = TypeMoq.Mock.ofType(TreeNodeInfo, TypeMoq.MockBehavior.Loose);
-        const childTreeNode = TypeMoq.Mock.ofType(TreeNodeInfo, TypeMoq.MockBehavior.Loose);
+        const parentTreeNode = TypeMoq.Mock.ofType(
+            ConnectableTreeNodeInfo,
+            TypeMoq.MockBehavior.Loose,
+        );
+        const childTreeNode = TypeMoq.Mock.ofType(
+            ConnectableTreeNodeInfo,
+            TypeMoq.MockBehavior.Loose,
+        );
         objectExplorerService
             .setup((s) => s.getChildren(TypeMoq.It.isAny()))
             .returns(() => Promise.resolve([childTreeNode.object]));
@@ -154,7 +160,10 @@ suite("Object Explorer Provider Tests", function () {
     });
 
     test("Test Get Children from Object Explorer Provider with no children", async () => {
-        const parentTreeNode = TypeMoq.Mock.ofType(TreeNodeInfo, TypeMoq.MockBehavior.Loose);
+        const parentTreeNode = TypeMoq.Mock.ofType(
+            ConnectableTreeNodeInfo,
+            TypeMoq.MockBehavior.Loose,
+        );
 
         const expandNodeSpy = TypeMoq.Mock.ofInstance((element, sessionId, promise) =>
             testObjectExplorerService.expandNode(element, sessionId, promise),
@@ -200,7 +209,7 @@ suite("Object Explorer Provider Tests", function () {
             profileName: "test_profile_3",
         } as ConnectionProfile);
 
-        const sortedNodes = testObjectExplorerService.sortByServerName([
+        const sortedNodes = testObjectExplorerService.sortByNodeLabel([
             connectionNode3,
             connectionNode1,
             connectionNode2,
@@ -469,7 +478,7 @@ suite("Object Explorer Node Types Test", () => {
     });
 
     test("Test Account Sign In Tree Node", () => {
-        const parentTreeNode = new TreeNodeInfo(
+        const parentTreeNode = new ConnectableTreeNodeInfo(
             "parent",
             undefined,
             undefined,
@@ -501,7 +510,7 @@ suite("Object Explorer Node Types Test", () => {
     });
 
     test("Test Connect Tree Node", () => {
-        const parentTreeNode = new TreeNodeInfo(
+        const parentTreeNode = new ConnectableTreeNodeInfo(
             "parent",
             undefined,
             undefined,
@@ -527,7 +536,7 @@ suite("Object Explorer Node Types Test", () => {
     });
 
     test("Test getters and setters for Tree Node", () => {
-        const treeNode = new TreeNodeInfo(
+        const treeNode = new ConnectableTreeNodeInfo(
             "test",
             {
                 type: "test_value",
@@ -565,7 +574,7 @@ suite("Object Explorer Node Types Test", () => {
         );
         treeNode.isLeaf = false;
         expect(treeNode.isLeaf, "Node should not be a leaf").is.equal(false);
-        treeNode.parentNode = treeNode.parentNode;
+        treeNode.parentNode = treeNode.parentNode as ConnectableTreeNodeInfo;
         expect(treeNode.parentNode, "Parent node should be equal to expected value").is.equal(
             undefined,
         );
@@ -587,7 +596,7 @@ suite("Object Explorer Node Types Test", () => {
             errorMessage: undefined,
             metadata: undefined,
         };
-        const treeNodeInfo = TreeNodeInfo.fromNodeInfo(
+        const treeNodeInfo = ConnectableTreeNodeInfo.fromNodeInfo(
             nodeInfo,
             "test_session",
             undefined,
@@ -647,7 +656,7 @@ suite("Object Explorer Node Types Test", () => {
             metadata: undefined,
         };
 
-        const treeNodeInfo = TreeNodeInfo.fromNodeInfo(
+        const treeNodeInfo = ConnectableTreeNodeInfo.fromNodeInfo(
             nodeInfo,
             "test_session",
             undefined,

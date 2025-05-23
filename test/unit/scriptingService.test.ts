@@ -14,7 +14,7 @@ import {
     ScriptingRequest,
     ScriptOperation,
 } from "../../src/models/contracts/scripting/scriptingRequest";
-import { TreeNodeInfo } from "../../src/objectExplorer/nodes/treeNodeInfo";
+import { ConnectableTreeNodeInfo } from "../../src/objectExplorer/nodes/treeNodeInfo";
 import { ScriptingService } from "../../src/scripting/scriptingService";
 import { TestExtensionContext } from "./stubs";
 
@@ -66,7 +66,7 @@ suite("Scripting Service Tests", () => {
             schema: "dbo",
             name: "test_table",
         };
-        const testNode = new TreeNodeInfo(
+        const testNode = new ConnectableTreeNodeInfo(
             "test_table (System Versioned)",
             undefined,
             undefined,
@@ -100,7 +100,7 @@ suite("Scripting Service Tests", () => {
             schema: "dbo",
             name: "test_table",
         };
-        const testNode = new TreeNodeInfo(
+        const testNode = new ConnectableTreeNodeInfo(
             "test_table (System Versioned)",
             undefined,
             undefined,
@@ -137,7 +137,7 @@ suite("Scripting Service Tests", () => {
             schema: "dbo",
             name: "test_table",
         };
-        const testNode = new TreeNodeInfo(
+        const testNode = new ConnectableTreeNodeInfo(
             "test_table (System Versioned)",
             undefined,
             undefined,
@@ -164,7 +164,7 @@ suite("Scripting Service Tests", () => {
             schema: "dbo",
             name: "test_table",
         };
-        const testNode = new TreeNodeInfo(
+        const testNode = new ConnectableTreeNodeInfo(
             "test_table (System Versioned)",
             undefined,
             undefined,
@@ -191,7 +191,7 @@ suite("Scripting Service Tests", () => {
             schema: "dbo",
             name: "test_proc",
         };
-        const testNode = new TreeNodeInfo(
+        const testNode = new ConnectableTreeNodeInfo(
             "test_table (System Versioned)",
             undefined,
             undefined,
@@ -218,7 +218,7 @@ suite("Scripting Service Tests", () => {
             schema: "dbo",
             name: "test_table",
         };
-        const testNode = new TreeNodeInfo(
+        const testNode = new ConnectableTreeNodeInfo(
             "test_table (System Versioned)",
             undefined,
             undefined,
@@ -245,7 +245,7 @@ suite("Scripting Service Tests", () => {
             schema: "dbo",
             name: "test_sproc",
         };
-        const testNode = new TreeNodeInfo(
+        const testNode = new ConnectableTreeNodeInfo(
             "test_table (System Versioned)",
             undefined,
             undefined,

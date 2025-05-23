@@ -25,7 +25,7 @@ import { AccountSignInTreeNode } from "../objectExplorer/nodes/accountSignInTree
 import { ConnectTreeNode } from "../objectExplorer/nodes/connectTreeNode";
 import { ObjectExplorerProvider } from "../objectExplorer/objectExplorerProvider";
 import { ObjectExplorerUtils } from "../objectExplorer/objectExplorerUtils";
-import { TreeNodeInfo } from "../objectExplorer/nodes/treeNodeInfo";
+import { ConnectableTreeNodeInfo } from "../objectExplorer/nodes/treeNodeInfo";
 import CodeAdapter from "../prompts/adapter";
 import { IPrompter } from "../prompts/question";
 import { Deferred } from "../protocol";
@@ -103,7 +103,7 @@ export default class MainController implements vscode.Disposable {
     public tableDesignerService: TableDesignerService;
     public copilotService: CopilotService;
     public configuration: vscode.WorkspaceConfiguration;
-    public objectExplorerTree: vscode.TreeView<TreeNodeInfo>;
+    public objectExplorerTree: vscode.TreeView<ConnectableTreeNodeInfo>;
     public executionPlanService: ExecutionPlanService;
     public schemaDesignerService: SchemaDesignerService;
 
@@ -344,73 +344,76 @@ export default class MainController implements vscode.Disposable {
             };
 
             this.registerCommandWithArgs(Constants.cmdChatWithDatabase);
-            this._event.on(Constants.cmdChatWithDatabase, async (treeNodeInfo: TreeNodeInfo) => {
-                sendActionEvent(TelemetryViews.MssqlCopilot, TelemetryActions.ChatWithDatabase);
+            this._event.on(
+                Constants.cmdChatWithDatabase,
+                async (treeNodeInfo: ConnectableTreeNodeInfo) => {
+                    sendActionEvent(TelemetryViews.MssqlCopilot, TelemetryActions.ChatWithDatabase);
 
-                const connectionCredentials = Object.assign({}, treeNodeInfo.connectionProfile);
-                const databaseName = ObjectExplorerUtils.getDatabaseName(treeNodeInfo);
-                if (
-                    databaseName !== connectionCredentials.database &&
-                    databaseName !== LocalizedConstants.defaultDatabaseLabel
-                ) {
-                    connectionCredentials.database = databaseName;
-                } else if (databaseName === LocalizedConstants.defaultDatabaseLabel) {
-                    connectionCredentials.database = "";
-                }
+                    const connectionCredentials = Object.assign({}, treeNodeInfo.connectionProfile);
+                    const databaseName = ObjectExplorerUtils.getDatabaseName(treeNodeInfo);
+                    if (
+                        databaseName !== connectionCredentials.database &&
+                        databaseName !== LocalizedConstants.defaultDatabaseLabel
+                    ) {
+                        connectionCredentials.database = databaseName;
+                    } else if (databaseName === LocalizedConstants.defaultDatabaseLabel) {
+                        connectionCredentials.database = "";
+                    }
 
-                // Check if the active document already has this database as a connection.
-                var alreadyActive = false;
-                let activeEditor = vscode.window.activeTextEditor;
-                if (activeEditor) {
-                    const uri = activeEditor.document.uri.toString();
-                    const connection = this._connectionMgr.getConnectionInfo(uri);
-                    if (connection) {
-                        if (
-                            connection.credentials.user === connectionCredentials.user &&
-                            connection.credentials.database === connectionCredentials.database
-                        ) {
-                            alreadyActive = true;
+                    // Check if the active document already has this database as a connection.
+                    var alreadyActive = false;
+                    let activeEditor = vscode.window.activeTextEditor;
+                    if (activeEditor) {
+                        const uri = activeEditor.document.uri.toString();
+                        const connection = this._connectionMgr.getConnectionInfo(uri);
+                        if (connection) {
+                            if (
+                                connection.credentials.user === connectionCredentials.user &&
+                                connection.credentials.database === connectionCredentials.database
+                            ) {
+                                alreadyActive = true;
+                            }
                         }
                     }
-                }
 
-                if (!alreadyActive) {
-                    treeNodeInfo.updateConnectionProfile(connectionCredentials);
-                    await this.onNewQuery(treeNodeInfo);
+                    if (!alreadyActive) {
+                        treeNodeInfo.updateConnectionProfile(connectionCredentials);
+                        await this.onNewQuery(treeNodeInfo);
 
-                    // Check if the new editor was created
-                    activeEditor = vscode.window.activeTextEditor;
-                    if (activeEditor) {
-                        const documentText = activeEditor.document.getText();
-                        if (documentText.length === 0) {
-                            // The editor is empty; safe to insert text
-                            const server = connectionCredentials.server;
-                            await activeEditor.edit((editBuilder) => {
-                                editBuilder.insert(
-                                    new vscode.Position(0, 0),
-                                    `-- @${Constants.mssqlChatParticipantName} Chat Query Editor (${server}:${connectionCredentials.database}:${connectionCredentials.user})\n`,
-                                );
-                            });
+                        // Check if the new editor was created
+                        activeEditor = vscode.window.activeTextEditor;
+                        if (activeEditor) {
+                            const documentText = activeEditor.document.getText();
+                            if (documentText.length === 0) {
+                                // The editor is empty; safe to insert text
+                                const server = connectionCredentials.server;
+                                await activeEditor.edit((editBuilder) => {
+                                    editBuilder.insert(
+                                        new vscode.Position(0, 0),
+                                        `-- @${Constants.mssqlChatParticipantName} Chat Query Editor (${server}:${connectionCredentials.database}:${connectionCredentials.user})\n`,
+                                    );
+                                });
+                            } else {
+                                // The editor already contains text
+                                console.warn("Chat with database: unable to open editor");
+                            }
                         } else {
-                            // The editor already contains text
-                            console.warn("Chat with database: unable to open editor");
+                            // The editor was somehow not created
+                            this._vscodeWrapper.showErrorMessage(
+                                "Chat with database: unable to open editor",
+                            );
                         }
-                    } else {
-                        // The editor was somehow not created
-                        this._vscodeWrapper.showErrorMessage(
-                            "Chat with database: unable to open editor",
+                    }
+
+                    if (activeEditor) {
+                        // Open chat window
+                        vscode.commands.executeCommand(
+                            "workbench.action.chat.open",
+                            `@${Constants.mssqlChatParticipantName} Hello!`,
                         );
                     }
-                }
-
-                if (activeEditor) {
-                    // Open chat window
-                    vscode.commands.executeCommand(
-                        "workbench.action.chat.open",
-                        `@${Constants.mssqlChatParticipantName} Hello!`,
-                    );
-                }
-            });
+                },
+            );
 
             // -- EXPLAIN QUERY --
             this._context.subscriptions.push(
@@ -522,7 +525,7 @@ export default class MainController implements vscode.Disposable {
      * Helper to script a node based on the script operation
      */
     public async scriptNode(
-        node: TreeNodeInfo,
+        node: ConnectableTreeNodeInfo,
         operation: ScriptOperation,
         executeScript: boolean = false,
     ): Promise<void> {
@@ -809,7 +812,7 @@ export default class MainController implements vscode.Disposable {
      */
     public async createObjectExplorerSession(
         connectionCredentials?: IConnectionInfo,
-    ): Promise<TreeNodeInfo> {
+    ): Promise<ConnectableTreeNodeInfo> {
         let retry = true;
         // There can be many reasons for the session creation to fail, so we will retry until we get a successful result or the user cancels the operation.
         let sessionCreationResult: CreateSessionResult = undefined;
@@ -888,7 +891,7 @@ export default class MainController implements vscode.Disposable {
         this._context.subscriptions.push(
             vscode.commands.registerCommand(
                 Constants.cmdObjectExplorerNewQuery,
-                async (treeNodeInfo: TreeNodeInfo) => {
+                async (treeNodeInfo: ConnectableTreeNodeInfo) => {
                     const connectionCredentials = treeNodeInfo.connectionProfile;
                     const databaseName = ObjectExplorerUtils.getDatabaseName(treeNodeInfo);
 
@@ -920,7 +923,7 @@ export default class MainController implements vscode.Disposable {
         this._context.subscriptions.push(
             vscode.commands.registerCommand(
                 Constants.cmdRefreshObjectExplorerNode,
-                async (treeNodeInfo: TreeNodeInfo) => {
+                async (treeNodeInfo: ConnectableTreeNodeInfo) => {
                     await this._objectExplorerProvider.refreshNode(treeNodeInfo);
                 },
             ),
@@ -1001,7 +1004,7 @@ export default class MainController implements vscode.Disposable {
             this._context.subscriptions.push(
                 vscode.commands.registerCommand(
                     Constants.cmdEditConnection,
-                    async (node: TreeNodeInfo) => {
+                    async (node: ConnectableTreeNodeInfo) => {
                         const connDialog = new ConnectionDialogWebviewController(
                             this._context,
                             this._vscodeWrapper,
@@ -1017,7 +1020,7 @@ export default class MainController implements vscode.Disposable {
             this._context.subscriptions.push(
                 vscode.commands.registerCommand(
                     Constants.cmdDesignSchema,
-                    async (node: TreeNodeInfo) => {
+                    async (node: ConnectableTreeNodeInfo) => {
                         const schemaDesigner =
                             await SchemaDesignerWebviewManager.getInstance().getSchemaDesigner(
                                 this._context,
@@ -1036,7 +1039,7 @@ export default class MainController implements vscode.Disposable {
             this._context.subscriptions.push(
                 vscode.commands.registerCommand(
                     Constants.cmdNewTable,
-                    async (node: TreeNodeInfo) => {
+                    async (node: ConnectableTreeNodeInfo) => {
                         const reactPanel = new TableDesignerWebviewController(
                             this._context,
                             this._vscodeWrapper,
@@ -1055,7 +1058,7 @@ export default class MainController implements vscode.Disposable {
             this._context.subscriptions.push(
                 vscode.commands.registerCommand(
                     Constants.cmdEditTable,
-                    async (node: TreeNodeInfo) => {
+                    async (node: ConnectableTreeNodeInfo) => {
                         const reactPanel = new TableDesignerWebviewController(
                             this._context,
                             this._vscodeWrapper,
@@ -1071,7 +1074,7 @@ export default class MainController implements vscode.Disposable {
                 ),
             );
 
-            const filterNode = async (node: TreeNodeInfo) => {
+            const filterNode = async (node: ConnectableTreeNodeInfo) => {
                 const filters = await ObjectExplorerFilter.getFilters(
                     this._context,
                     this._vscodeWrapper,
@@ -1117,7 +1120,7 @@ export default class MainController implements vscode.Disposable {
             this._context.subscriptions.push(
                 vscode.commands.registerCommand(
                     Constants.cmdClearFilters,
-                    async (node: TreeNodeInfo) => {
+                    async (node: ConnectableTreeNodeInfo) => {
                         node.filters = [];
                         await this._objectExplorerProvider.refreshNode(node);
                         await this.objectExplorerTree.reveal(node, {
@@ -1144,7 +1147,7 @@ export default class MainController implements vscode.Disposable {
         this._context.subscriptions.push(
             vscode.commands.registerCommand(
                 Constants.cmdScriptSelect,
-                async (node: TreeNodeInfo) => {
+                async (node: ConnectableTreeNodeInfo) => {
                     await this.scriptNode(node, ScriptOperation.Select, true);
                     UserSurvey.getInstance().promptUserForNPSFeedback();
                 },
@@ -1155,7 +1158,8 @@ export default class MainController implements vscode.Disposable {
         this._context.subscriptions.push(
             vscode.commands.registerCommand(
                 Constants.cmdScriptCreate,
-                async (node: TreeNodeInfo) => await this.scriptNode(node, ScriptOperation.Create),
+                async (node: ConnectableTreeNodeInfo) =>
+                    await this.scriptNode(node, ScriptOperation.Create),
             ),
         );
 
@@ -1163,7 +1167,8 @@ export default class MainController implements vscode.Disposable {
         this._context.subscriptions.push(
             vscode.commands.registerCommand(
                 Constants.cmdScriptDelete,
-                async (node: TreeNodeInfo) => await this.scriptNode(node, ScriptOperation.Delete),
+                async (node: ConnectableTreeNodeInfo) =>
+                    await this.scriptNode(node, ScriptOperation.Delete),
             ),
         );
 
@@ -1171,7 +1176,8 @@ export default class MainController implements vscode.Disposable {
         this._context.subscriptions.push(
             vscode.commands.registerCommand(
                 Constants.cmdScriptExecute,
-                async (node: TreeNodeInfo) => await this.scriptNode(node, ScriptOperation.Execute),
+                async (node: ConnectableTreeNodeInfo) =>
+                    await this.scriptNode(node, ScriptOperation.Execute),
             ),
         );
 
@@ -1179,7 +1185,8 @@ export default class MainController implements vscode.Disposable {
         this._context.subscriptions.push(
             vscode.commands.registerCommand(
                 Constants.cmdScriptAlter,
-                async (node: TreeNodeInfo) => await this.scriptNode(node, ScriptOperation.Alter),
+                async (node: ConnectableTreeNodeInfo) =>
+                    await this.scriptNode(node, ScriptOperation.Alter),
             ),
         );
 
@@ -1187,7 +1194,7 @@ export default class MainController implements vscode.Disposable {
         this._context.subscriptions.push(
             vscode.commands.registerCommand(
                 Constants.cmdCopyObjectName,
-                async (node: TreeNodeInfo) => {
+                async (node: ConnectableTreeNodeInfo) => {
                     const name = ObjectExplorerUtils.getQualifiedName(node);
                     if (name) {
                         await this._vscodeWrapper.clipboardWriteText(name);
@@ -1929,7 +1936,7 @@ export default class MainController implements vscode.Disposable {
      * 3. User triggered "New Query" from command palette while they have a connected OE node selected: use that node's connection profile
      * 4. User triggered "New Query" from command palette and there's no reasonable context: prompt for connection to use
      */
-    public async onNewQuery(node?: TreeNodeInfo, content?: string): Promise<boolean> {
+    public async onNewQuery(node?: ConnectableTreeNodeInfo, content?: string): Promise<boolean> {
         if (!this.canRunCommand()) {
             return;
         }
@@ -2194,7 +2201,7 @@ export default class MainController implements vscode.Disposable {
             let needsRefresh = false;
             // user connections is a super set of object explorer connections
             // read the connections from glocal settings and workspace settings.
-            let userConnections: any[] =
+            let userConnections: IConnectionProfile[] =
                 await this.connectionManager.connectionStore.connectionConfig.getConnections(true);
             let objectExplorerConnections = this._objectExplorerProvider.rootNodeConnections;
 
@@ -2234,7 +2241,7 @@ export default class MainController implements vscode.Disposable {
             for (let conn of newConnections) {
                 // if a connection is not connected
                 // that means it was added manually
-                const newConnectionProfile = <IConnectionProfile>conn;
+                const newConnectionProfile = conn;
                 const uri = ObjectExplorerUtils.getNodeUriFromProfile(newConnectionProfile);
                 if (
                     !this.connectionManager.isActiveConnection(conn) &&
@@ -2250,14 +2257,16 @@ export default class MainController implements vscode.Disposable {
 
             if (e.affectsConfiguration(Constants.cmdObjectExplorerGroupBySchemaFlagName)) {
                 let errorFoundWhileRefreshing = false;
-                (await this._objectExplorerProvider.getChildren()).forEach((n: TreeNodeInfo) => {
-                    try {
-                        void this._objectExplorerProvider.refreshNode(n);
-                    } catch (e) {
-                        errorFoundWhileRefreshing = true;
-                        this._connectionMgr.client.logger.error(e);
-                    }
-                });
+                (await this._objectExplorerProvider.getChildren()).forEach(
+                    (n: ConnectableTreeNodeInfo) => {
+                        try {
+                            void this._objectExplorerProvider.refreshNode(n);
+                        } catch (e) {
+                            errorFoundWhileRefreshing = true;
+                            this._connectionMgr.client.logger.error(e);
+                        }
+                    },
+                );
                 if (errorFoundWhileRefreshing) {
                     Utils.showErrorMsg(LocalizedConstants.objectExplorerNodeRefreshError);
                 }

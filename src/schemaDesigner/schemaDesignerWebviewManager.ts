@@ -7,7 +7,7 @@ import * as vscode from "vscode";
 import VscodeWrapper from "../controllers/vscodeWrapper";
 import { SchemaDesigner } from "../sharedInterfaces/schemaDesigner";
 import { SchemaDesignerWebviewController } from "./schemaDesignerWebviewController";
-import { TreeNodeInfo } from "../objectExplorer/nodes/treeNodeInfo";
+import { ConnectableTreeNodeInfo } from "../objectExplorer/nodes/treeNodeInfo";
 import MainController from "../controllers/mainController";
 import * as LocConstants from "../constants/locConstants";
 import { TelemetryViews, TelemetryActions } from "../sharedInterfaces/telemetry";
@@ -35,7 +35,7 @@ export class SchemaDesignerWebviewManager {
         mainController: MainController,
         schemaDesignerService: SchemaDesigner.ISchemaDesignerService,
         databaseName: string,
-        treeNode: TreeNodeInfo,
+        treeNode: ConnectableTreeNodeInfo,
     ): Promise<SchemaDesignerWebviewController> {
         const connectionInfo = treeNode.connectionProfile;
         connectionInfo.database = databaseName;

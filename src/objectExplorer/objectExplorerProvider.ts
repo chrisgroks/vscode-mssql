@@ -6,7 +6,7 @@
 import * as vscode from "vscode";
 import ConnectionManager from "../controllers/connectionManager";
 import { CreateSessionResult, ObjectExplorerService } from "./objectExplorerService";
-import { TreeNodeInfo } from "./nodes/treeNodeInfo";
+import { ConnectableTreeNodeInfo } from "./nodes/treeNodeInfo";
 import { Deferred } from "../protocol";
 import { IConnectionInfo } from "vscode-mssql";
 import VscodeWrapper from "../controllers/vscodeWrapper";
@@ -38,19 +38,19 @@ export class ObjectExplorerProvider implements vscode.TreeDataProvider<any> {
         );
     }
 
-    public getParent(element: TreeNodeInfo) {
+    public getParent(element: ConnectableTreeNodeInfo) {
         return element.parentNode;
     }
 
-    public refresh(nodeInfo?: TreeNodeInfo): void {
+    public refresh(nodeInfo?: ConnectableTreeNodeInfo): void {
         this._onDidChangeTreeData.fire(nodeInfo);
     }
 
-    public getTreeItem(node: TreeNodeInfo): TreeNodeInfo {
+    public getTreeItem(node: ConnectableTreeNodeInfo): ConnectableTreeNodeInfo {
         return node;
     }
 
-    public async getChildren(element?: TreeNodeInfo): Promise<vscode.TreeItem[]> {
+    public async getChildren(element?: ConnectableTreeNodeInfo): Promise<vscode.TreeItem[]> {
         const children = await this._objectExplorerService.getChildren(element);
         if (children) {
             return children;
@@ -64,9 +64,9 @@ export class ObjectExplorerProvider implements vscode.TreeDataProvider<any> {
     }
 
     public async expandNode(
-        node: TreeNodeInfo,
+        node: ConnectableTreeNodeInfo,
         sessionId: string,
-        promise: Deferred<TreeNodeInfo[]>,
+        promise: Deferred<ConnectableTreeNodeInfo[]>,
     ): Promise<boolean> {
         return this._objectExplorerService.expandNode(node, sessionId, promise);
     }
@@ -80,7 +80,7 @@ export class ObjectExplorerProvider implements vscode.TreeDataProvider<any> {
         this.refresh(node);
     }
 
-    public async refreshNode(node: TreeNodeInfo): Promise<void> {
+    public async refreshNode(node: ConnectableTreeNodeInfo): Promise<void> {
         node.shouldRefresh = true;
         this._onDidChangeTreeData.fire(node);
     }
@@ -94,7 +94,7 @@ export class ObjectExplorerProvider implements vscode.TreeDataProvider<any> {
         this._objectExplorerService.addDisconnectedNode(connectionCredentials);
     }
 
-    public deleteChildrenCache(node: TreeNodeInfo): void {
+    public deleteChildrenCache(node: ConnectableTreeNodeInfo): void {
         this._objectExplorerService.cleanNodeChildren(node);
     }
 

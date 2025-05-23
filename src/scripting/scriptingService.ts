@@ -13,7 +13,7 @@ import {
     IScriptOptions,
     ScriptingProgressNotification,
 } from "../models/contracts/scripting/scriptingRequest";
-import { TreeNodeInfo } from "../objectExplorer/nodes/treeNodeInfo";
+import { ConnectableTreeNodeInfo } from "../objectExplorer/nodes/treeNodeInfo";
 import * as vscode from "vscode";
 
 export class ScriptingService {
@@ -80,7 +80,7 @@ export class ScriptingService {
      * Helper to get the object name and schema name
      * (Public for testing purposes)
      */
-    public getObjectFromNode(node: TreeNodeInfo): IScriptingObject | undefined {
+    public getObjectFromNode(node: ConnectableTreeNodeInfo): IScriptingObject | undefined {
         let metadata = node.metadata;
         if (!metadata) {
             return undefined;
@@ -99,7 +99,7 @@ export class ScriptingService {
      * Helper to create scripting params
      */
     public createScriptingParams(
-        node: TreeNodeInfo,
+        node: ConnectableTreeNodeInfo,
         uri: string,
         operation: ScriptOperation,
     ): IScriptingParams {
@@ -154,7 +154,7 @@ export class ScriptingService {
     }
 
     public async script(
-        node: TreeNodeInfo,
+        node: ConnectableTreeNodeInfo,
         uri: string,
         operation: ScriptOperation,
     ): Promise<string> {
