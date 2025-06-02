@@ -457,6 +457,11 @@
                     "when": "view == objectExplorer && config.mssql.objectExplorer.groupBySchema",
                     "title": "%mssql.objectExplorer.disableGroupBySchema%",
                     "group": "navigation"
+                },
+                {
+                    "command": "mssql.createConnectionGroup",
+                    "when": "view == objectExplorer",
+                    "group": "navigation"
                 }
             ],
             "view/item/context": [
@@ -608,6 +613,21 @@
                     "command": "mssql.deleteQueryHistory",
                     "when": "view == queryHistory && viewItem == queryHistoryNode",
                     "group": "MS_SQL@3"
+                },
+                {
+                    "command": "mssql.deleteConnectionGroup",
+                    "when": "view == objectExplorer && viewItem =~ /connectionGroup/",
+                    "group": "1_modification"
+                },
+                {
+                    "command": "mssql.addConnectionToGroup",
+                    "when": "view == objectExplorer && viewItem =~ /disconnectedServer|Server/",
+                    "group": "2_configuration"
+                },
+                {
+                    "command": "mssql.removeConnectionFromGroup",
+                    "when": "view == objectExplorer && viewItem =~ /disconnectedServer|Server/ && viewItem =~ /connectionGroup/",
+                    "group": "2_configuration"
                 }
             ],
             "commandPalette": [
@@ -1042,6 +1062,28 @@
                 "command": "mssql.copilot.rewriteQuery",
                 "title": "%mssql.copilot.rewriteQuery%",
                 "category": "MSSQL"
+            },
+            {
+                "command": "mssql.createConnectionGroup",
+                "title": "%mssql.createConnectionGroup%",
+                "category": "MS SQL",
+                "icon": "$(add)"
+            },
+            {
+                "command": "mssql.deleteConnectionGroup",
+                "title": "%mssql.deleteConnectionGroup%",
+                "category": "MS SQL",
+                "icon": "$(trash)"
+            },
+            {
+                "command": "mssql.addConnectionToGroup",
+                "title": "%mssql.addConnectionToGroup%",
+                "category": "MS SQL"
+            },
+            {
+                "command": "mssql.removeConnectionFromGroup",
+                "title": "%mssql.removeConnectionFromGroup%",
+                "category": "MS SQL"
             }
         ],
         "keybindings": [

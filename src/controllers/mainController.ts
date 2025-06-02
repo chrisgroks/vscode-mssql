@@ -68,6 +68,7 @@ import { CopilotService } from "../services/copilotService";
 import * as Prompts from "../chat/prompts";
 import { CreateSessionResult } from "../objectExplorer/objectExplorerService";
 import { SqlCodeLensProvider } from "../queryResult/sqlCodeLensProvider";
+import { ConnectionGroupNode } from "../objectExplorer/nodes/connectionGroupNode";
 
 /**
  * The main controller class that initializes the extension
@@ -858,6 +859,86 @@ export default class MainController implements vscode.Disposable {
             dragAndDropController: new ObjectExplorerDragAndDropController(),
         });
         this._context.subscriptions.push(this.objectExplorerTree);
+
+        // Add commands for managing connection groups
+        this._context.subscriptions.push(
+            vscode.commands.registerCommand("mssql.createConnectionGroup", async () => {
+                const name = await this._vscodeWrapper.showInputBox({
+                    prompt: LocalizedConstants.createConnectionGroupPrompt,
+                    placeHolder: LocalizedConstants.createConnectionGroupPlaceholder,
+                });
+
+                if (name) {
+                    const group = {
+                        id: `group-${Date.now()}`,
+                        name,
+                        connections: [],
+                    };
+                    await this._objectExplorerProvider.objectExplorerService.connectionGroupStore.saveGroup(
+                        group,
+                    );
+                    this._objectExplorerProvider.refresh(undefined);
+                }
+            }),
+        );
+
+        this._context.subscriptions.push(
+            vscode.commands.registerCommand(
+                "mssql.deleteConnectionGroup",
+                async (node: ConnectionGroupNode) => {
+                    const confirm = await this._vscodeWrapper.showWarningMessageAdvanced(
+                        LocalizedConstants.deleteConnectionGroupPrompt(node.group.name),
+                        { modal: true },
+                        [LocalizedConstants.Common.delete, LocalizedConstants.Common.cancel],
+                    );
+
+                    if (confirm === LocalizedConstants.Common.delete) {
+                        await this._objectExplorerProvider.objectExplorerService.connectionGroupStore.deleteGroup(
+                            node.group.id,
+                        );
+                        this._objectExplorerProvider.refresh(undefined);
+                    }
+                },
+            ),
+        );
+
+        this._context.subscriptions.push(
+            vscode.commands.registerCommand(
+                "mssql.addConnectionToGroup",
+                async (node: ConnectionNode) => {
+                    const groups =
+                        await this._objectExplorerProvider.objectExplorerService.connectionGroupStore.getGroups();
+                    const items = groups.map((g) => ({ label: g.name, group: g }));
+
+                    const selection = await this._vscodeWrapper.showQuickPick(items, {
+                        placeHolder: LocalizedConstants.selectConnectionGroupPrompt,
+                    });
+
+                    if (selection) {
+                        await this._objectExplorerProvider.objectExplorerService.connectionGroupStore.addConnectionToGroup(
+                            selection.group.id,
+                            node.connectionProfile,
+                        );
+                        this._objectExplorerProvider.refresh(undefined);
+                    }
+                },
+            ),
+        );
+
+        this._context.subscriptions.push(
+            vscode.commands.registerCommand(
+                "mssql.removeConnectionFromGroup",
+                async (node: ConnectionNode) => {
+                    if (node.parentNode instanceof ConnectionGroupNode) {
+                        await this._objectExplorerProvider.objectExplorerService.connectionGroupStore.removeConnectionFromGroup(
+                            node.parentNode.group.id,
+                            node.connectionProfile,
+                        );
+                        this._objectExplorerProvider.refresh(undefined);
+                    }
+                },
+            ),
+        );
 
         // Old style Add connection when experimental features are not enabled
 

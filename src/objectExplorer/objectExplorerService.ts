@@ -60,6 +60,8 @@ import VscodeWrapper from "../controllers/vscodeWrapper";
 import { ExpandErrorNode } from "./nodes/expandErrorNode";
 import { NoItemsNode } from "./nodes/noItemNode";
 import { ConnectionNode } from "./nodes/connectionNode";
+import { ConnectionGroupStore } from "../models/connectionGroupStore";
+import { ConnectionGroupNode } from "./nodes/connectionGroupNode";
 
 export interface CreateSessionResult {
     sessionId?: string;
@@ -94,6 +96,8 @@ export class ObjectExplorerService {
         Deferred<ExpandResponse>
     >();
 
+    private _connectionGroupStore: ConnectionGroupStore;
+
     constructor(
         private _vscodeWrapper: VscodeWrapper,
         private _connectionManager: ConnectionManager,
@@ -115,6 +119,8 @@ export class ObjectExplorerService {
         this._client.onNotification(ExpandCompleteNotification.type, (e) =>
             this.handleExpandNodeNotification(e),
         );
+
+        this._connectionGroupStore = new ConnectionGroupStore();
     }
 
     /**
@@ -364,10 +370,25 @@ export class ObjectExplorerService {
 
     // Main method that routes to the appropriate handler
     public async getChildren(element?: TreeNodeInfo): Promise<vscode.TreeItem[]> {
-        if (element) {
+        try {
+            if (!element) {
+                return this.getRootNodes();
+            }
+
+            // If this is a connection group node, return its connections
+            if (element instanceof ConnectionGroupNode) {
+                const group = await this._connectionGroupStore.getGroup(element.group.id);
+                if (group && group.connections) {
+                    return group.connections.map((conn) => new ConnectionNode(conn));
+                }
+                return [];
+            }
+
+            // For other nodes, use existing logic
             return this.getNodeChildren(element);
-        } else {
-            return this.getRootNodes();
+        } catch (err) {
+            this._logger.error(`Failed to get children for node: ${err}`);
+            return [];
         }
     }
 
@@ -408,7 +429,29 @@ export class ObjectExplorerService {
         getConnectionActivity.end(ActivityStatus.Succeeded, undefined, {
             nodeCount: result.length,
         });
-        return result;
+
+        // Get connection groups
+        const groups = await this._connectionGroupStore.getGroups();
+        const groupNodes = groups.map((group) => new ConnectionGroupNode(group));
+
+        // Get ungrouped connections
+        const ungroupedConnections = result.filter((conn) => {
+            // Check if this connection exists in any group
+            return !groups.some((group) =>
+                group.connections?.some(
+                    (groupConn) =>
+                        groupConn.server === conn.connectionProfile.server &&
+                        groupConn.database === conn.connectionProfile.database &&
+                        groupConn.user === conn.connectionProfile.user,
+                ),
+            );
+        });
+
+        // Add the "Add Connection" node
+        const addConnectionNode = this.getAddConnectionNode();
+
+        // Return groups first, then ungrouped connections, then add connection node
+        return [...groupNodes, ...ungroupedConnections, ...addConnectionNode];
     }
 
     /**
@@ -1084,5 +1127,9 @@ export class ObjectExplorerService {
     public get rootNodeConnections(): IConnectionInfo[] {
         const connections = this._rootTreeNodeArray.map((node) => node.connectionProfile);
         return connections;
+    }
+
+    public get connectionGroupStore(): ConnectionGroupStore {
+        return this._connectionGroupStore;
     }
 }

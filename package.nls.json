@@ -208,5 +208,9 @@
     "mssql.walkthroughs.nextSteps.viewQueryPlan.altText": "Query plan visualization",
     "mssql.walkthroughs.nextSteps.objectExplorerFilters.title": "Filter your Object Explorer Tree",
     "mssql.walkthroughs.nextSteps.objectExplorerFilters.description": "Only see the database objects that matter most to you by applying filters to the Object Explorer tree.\nStart by clicking the filter button next to most folders in the Connections view.",
-    "mssql.walkthroughs.nextSteps.objectExplorerFilters.altText": "Object Explorer filters"
+    "mssql.walkthroughs.nextSteps.objectExplorerFilters.altText": "Object Explorer filters",
+    "mssql.createConnectionGroup": "Create Connection Group",
+    "mssql.deleteConnectionGroup": "Delete Connection Group",
+    "mssql.addConnectionToGroup": "Add to Connection Group",
+    "mssql.removeConnectionFromGroup": "Remove from Connection Group"
 }

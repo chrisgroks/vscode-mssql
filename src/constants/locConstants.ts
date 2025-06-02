@@ -578,7 +578,7 @@ export class ObjectExplorer {
     public static ErrorLoadingRefreshToTryAgain = l10n.t("Error loading; refresh to try again");
     public static NoItems = l10n.t("No items");
     public static FailedOEConnectionError = l10n.t(
-        "We couldn’t connect using the current connection information. Would you like to retry the connection or edit the connection profile?",
+        "We couldn't connect using the current connection information. Would you like to retry the connection or edit the connection profile?",
     );
     public static FailedOEConnectionErrorRetry = l10n.t("Retry");
     public static FailedOEConnectionErrorUpdate = l10n.t("Edit Connection Profile");
@@ -1013,3 +1013,10 @@ export class MssqlChatAgent {
 export class QueryEditor {
     public static codeLensConnect = l10n.t("$(plug)  Connect to MSSQL");
 }
+
+// Connection Group strings
+export const createConnectionGroupPrompt = "Enter a name for the new connection group";
+export const createConnectionGroupPlaceholder = "Group name";
+export const deleteConnectionGroupPrompt = (name: string) =>
+    `Are you sure you want to delete the connection group "${name}"?`;
+export const selectConnectionGroupPrompt = "Select a connection group";
