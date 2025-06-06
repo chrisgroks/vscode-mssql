@@ -1305,7 +1305,7 @@ export class ObjectExplorerService {
         const foundNode = this._connectionNodes.get(connectionProfile.id);
 
         if (!foundNode) {
-            this._logger.error(
+            this._logger.verbose(
                 `Connection node not found for profile with ID: ${connectionProfile.id}`,
             );
         }
