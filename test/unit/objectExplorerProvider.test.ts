@@ -11,7 +11,6 @@ import ConnectionManager from "../../src/controllers/connectionManager";
 import SqlToolsServiceClient from "../../src/languageservice/serviceclient";
 import { expect, assert } from "chai";
 import { TreeNodeInfo } from "../../src/objectExplorer/nodes/treeNodeInfo";
-import { ConnectionCredentials } from "../../src/models/connectionCredentials";
 import { AddConnectionTreeNode } from "../../src/objectExplorer/nodes/addConnectionTreeNode";
 import * as LocalizedConstants from "../../src/constants/locConstants";
 import { AccountSignInTreeNode } from "../../src/objectExplorer/nodes/accountSignInTreeNode";
@@ -441,7 +440,7 @@ suite("Object Explorer Provider Tests", function () {
     });
 
     test("Test rootNodeConnections getter", () => {
-        let testConnections = [new ConnectionCredentials()];
+        let testConnections = [new ConnectionProfile()];
         objectExplorerService.setup((s) => s.connections).returns(() => testConnections);
         let rootConnections = objectExplorerProvider.connections;
         objectExplorerService.verify((s) => s.connections, TypeMoq.Times.once());

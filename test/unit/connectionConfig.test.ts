@@ -133,7 +133,7 @@ suite("ConnectionConfig Tests", () => {
             const nonRootGroup = savedGroups.find((g) => g.name === "Group without ID");
             expect(nonRootGroup).to.not.be.undefined;
             expect(nonRootGroup?.id).to.not.be.undefined;
-            expect(nonRootGroup?.groupId).to.equal(rootGroupId);
+            expect(nonRootGroup?.parentId).to.equal(rootGroupId);
         });
 
         test("Initialization adds missing IDs to connection profiles", async () => {
