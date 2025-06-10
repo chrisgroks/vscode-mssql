@@ -1513,7 +1513,15 @@ export default class ConnectionManager {
             this.statusView.notConnected(uri);
         }
     }
-    public async transferFileConnection(
+
+    /**
+     * Copies the connection info from one file to another, optionally disconnecting the old file.
+     * @param oldFileUri File to copy the connection info from
+     * @param newFileUri File to copy the connection info to
+     * @param keepOldConnected Whether to keep the old file connected after copying the connection info.  Defaults to false.
+     * @returns
+     */
+    public async copyConnectionToFile(
         oldFileUri: string,
         newFileUri: string,
         keepOldConnected: boolean = false,

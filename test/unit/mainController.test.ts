@@ -91,7 +91,7 @@ suite("MainController Tests", function () {
         void mainController.onDidCloseTextDocument(document2);
         try {
             connectionManager.verify(
-                (x) => x.transferFileConnection(TypeMoq.It.isAny(), TypeMoq.It.isAny()),
+                (x) => x.copyConnectionToFile(TypeMoq.It.isAny(), TypeMoq.It.isAny()),
                 TypeMoq.Times.once(),
             );
             assert.equal(docUriCallback, document2.uri.toString());
@@ -111,7 +111,7 @@ suite("MainController Tests", function () {
         // Verify renameDoc function was called
         try {
             connectionManager.verify(
-                (x) => x.transferFileConnection(TypeMoq.It.isAny(), TypeMoq.It.isAny()),
+                (x) => x.copyConnectionToFile(TypeMoq.It.isAny(), TypeMoq.It.isAny()),
                 TypeMoq.Times.once(),
             );
             assert.equal(docUriCallback, document.uri.toString());
@@ -135,7 +135,7 @@ suite("MainController Tests", function () {
             try {
                 connectionManager.verify(
                     (x) =>
-                        x.transferFileConnection(
+                        x.copyConnectionToFile(
                             // ignore changes to settings.json because MainController setup adds missing mssql connection settings
                             TypeMoq.It.is((x) => !x.endsWith("settings.json")),
                             TypeMoq.It.is((x) => !x.endsWith("settings.json")),
@@ -182,7 +182,7 @@ suite("MainController Tests", function () {
                 TypeMoq.Times.never(),
             );
             connectionManager.verify(
-                (x) => x.transferFileConnection(TypeMoq.It.isAny(), TypeMoq.It.isAny()),
+                (x) => x.copyConnectionToFile(TypeMoq.It.isAny(), TypeMoq.It.isAny()),
                 TypeMoq.Times.never(),
             );
             done();
@@ -337,11 +337,7 @@ suite("MainController Tests", function () {
         ).to.deep.equal(editor.document);
         connectionManager.verify(
             (x) =>
-                x.transferFileConnection(
-                    TypeMoq.It.isAny(),
-                    TypeMoq.It.isAny(),
-                    TypeMoq.It.isAny(),
-                ),
+                x.copyConnectionToFile(TypeMoq.It.isAny(), TypeMoq.It.isAny(), TypeMoq.It.isAny()),
             TypeMoq.Times.never(),
         );
 
@@ -353,7 +349,7 @@ suite("MainController Tests", function () {
             "previous active document should be changed to new script when opening a SQL file",
         ).to.deep.equal(script2);
         connectionManager.verify(
-            (x) => x.transferFileConnection(script1.uri.toString(), script2.uri.toString(), true),
+            (x) => x.copyConnectionToFile(script1.uri.toString(), script2.uri.toString(), true),
             TypeMoq.Times.once(),
         );
 
@@ -369,11 +365,7 @@ suite("MainController Tests", function () {
         ).to.deep.equal(undefined);
         connectionManager.verify(
             (x) =>
-                x.transferFileConnection(
-                    TypeMoq.It.isAny(),
-                    TypeMoq.It.isAny(),
-                    TypeMoq.It.isAny(),
-                ),
+                x.copyConnectionToFile(TypeMoq.It.isAny(), TypeMoq.It.isAny(), TypeMoq.It.isAny()),
             TypeMoq.Times.never(),
         );
 
@@ -386,11 +378,7 @@ suite("MainController Tests", function () {
         ).to.deep.equal(script1);
         connectionManager.verify(
             (x) =>
-                x.transferFileConnection(
-                    TypeMoq.It.isAny(),
-                    TypeMoq.It.isAny(),
-                    TypeMoq.It.isAny(),
-                ),
+                x.copyConnectionToFile(TypeMoq.It.isAny(), TypeMoq.It.isAny(), TypeMoq.It.isAny()),
             TypeMoq.Times.never(),
         );
     });
@@ -411,7 +399,7 @@ suite("MainController Tests", function () {
             });
 
         connectionManager
-            .setup((x) => x.transferFileConnection(TypeMoq.It.isAny(), TypeMoq.It.isAny()))
+            .setup((x) => x.copyConnectionToFile(TypeMoq.It.isAny(), TypeMoq.It.isAny()))
             .callback((doc, newDoc) => {
                 docUriCallback = doc;
                 newDocUriCallback = newDoc;
