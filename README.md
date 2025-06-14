@@ -1,3 +1,8 @@
+> **Fork notice**
+> This repository is an *unmodified* fork of Microsoft’s vscode-mssql extension.
+> All authorship, copyright, and ownership remain with the original authors.
+> Changes in this fork are limited to packaging and publication on the OpenVSX Marketplace.
+
 [![Build and Test (Unit + E2E)](https://github.com/microsoft/vscode-mssql/actions/workflows/build-and-test.yml/badge.svg?branch=main)](https://github.com/microsoft/vscode-mssql/actions/workflows/build-and-test.yml)
 ![GitHub Discussions](https://img.shields.io/github/discussions/microsoft/vscode-mssql)
 
